@@ -51,7 +51,6 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.0",
     "typescript": "^5",
-    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.10",
     "workbox-build": "^7.4.1"
   }
