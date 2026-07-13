@@ -27,8 +27,8 @@ A progressive web app that lets a fantasy football league:
 | ORM | Prisma | Type-safe, migration-friendly, pairs well with TDD |
 | Cache | Redis | Player data, league data, computed valuations |
 | Auth | Auth.js (NextAuth) | Google OAuth + email/magic link |
-| PWA | `next-pwa` / Workbox | Service worker, manifest |
-| Testing | Vitest or Jest (unit/integration), Playwright (e2e) | See section 5 |
+| PWA | Web app manifest via Next.js metadata API + `workbox-build` | Service worker (`public/sw.js`) is generated from `public/sw-src.js` by a plain postbuild script calling `workbox-build`'s `injectManifest` directly — not a next.config bundler plugin. `next-pwa` is unmaintained (last published 2022) and, like `@serwist/next`, hooks `next.config`'s `webpack()` function, which hard-errors under Next.js 16's Turbopack-by-default build. `@serwist/turbopack` is a newer, less-proven alternative. Decided in Phase 0; see that phase's PR for the full comparison. |
+| Testing | Vitest (unit/integration), Playwright (e2e) | See section 5 |
 | Player projections | FantasyPros public API (free tier) for v1 | Free for personal/non-commercial use, fits this app; revisit a paid provider (SportsData.io, Fantasy Nerds) only if the app ever needs to scale beyond personal league use — see note below |
 | Deployment | Vercel (frontend/API) + managed Postgres (Supabase/Neon/RDS) + managed Redis | |
 
