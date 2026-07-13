@@ -31,7 +31,9 @@
     "react-dom": "19.2.4"
   },
   "overrides": {
-    "nodemailer": "^9.0.3"
+    "nodemailer": "^9.0.3",
+    "@emnapi/core": "1.11.2",
+    "@emnapi/runtime": "1.11.2"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",

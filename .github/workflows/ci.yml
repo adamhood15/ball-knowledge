@@ -40,7 +40,14 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        # Not `npm ci`: its strict lock-sync check is flaky here because
+        # napi-rs-based native tooling (Rolldown/Vite, Tailwind Oxide,
+        # Next's SWC) ships WASM-fallback optional dependencies that can
+        # resolve to different patch versions depending on the exact npm
+        # version — even though those fallbacks are never actually used on
+        # this runner's glibc x64 platform. `npm install` still installs
+        # from the committed lock file wherever it can.
+        run: npm install
 
       - name: Lint
         run: npm run lint
