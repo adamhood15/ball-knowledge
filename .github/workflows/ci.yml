@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ball_knowledge_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/ball_knowledge_ci?schema=public"
+      NEXTAUTH_SECRET: "ci-test-secret-not-for-production-use"
+      NEXTAUTH_URL: "http://localhost:3000"
+      GOOGLE_CLIENT_ID: "ci-placeholder-client-id"
+      GOOGLE_CLIENT_SECRET: "ci-placeholder-client-secret"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        # Not `npm ci`: its strict lock-sync check is flaky here because
+        # napi-rs-based native tooling (Rolldown/Vite, Tailwind Oxide,
+        # Next's SWC) ships WASM-fallback optional dependencies that can
+        # resolve to different patch versions depending on the exact npm
+        # version — even though those fallbacks are never actually used on
+        # this runner's glibc x64 platform. `npm install` still installs
+        # from the committed lock file wherever it can.
+        run: npm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Apply database migrations
+        run: npx prisma migrate deploy
+
+      - name: Test
+        run: npm test
