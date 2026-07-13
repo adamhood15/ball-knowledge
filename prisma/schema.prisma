@@ -1,0 +1,138 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- Auth.js (NextAuth) required models ---
+// https://authjs.dev/getting-started/adapters/prisma
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- Core product entities (roadmap.md section 4) ---
+
+enum LeaguePlatform {
+  SLEEPER
+  ESPN
+  MANUAL
+}
+
+enum LeagueMode {
+  REDRAFT
+  DYNASTY
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  accounts       Account[]
+  sessions       Session[]
+  leaguesCreated League[]  @relation("LeagueCommissioner")
+  teamsOwned     Team[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model League {
+  id                 String         @id @default(cuid())
+  platform           LeaguePlatform
+  externalLeagueId   String?
+  name               String
+  mode               LeagueMode     @default(REDRAFT)
+  // Flexible JSON: stat categories and point values vary by league (AGENTS.md section 3).
+  scoringSettings    Json?
+  // Flexible JSON: starting lineup slots and counts vary by league, e.g. two-QB/superflex.
+  rosterConstruction Json?
+  createdByUserId    String
+
+  createdBy User   @relation("LeagueCommissioner", fields: [createdByUserId], references: [id])
+  teams     Team[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Team {
+  id             String  @id @default(cuid())
+  leagueId       String
+  ownerId        String?
+  externalTeamId String?
+
+  league  League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  owner   User?    @relation(fields: [ownerId], references: [id])
+  rosters Roster[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([leagueId, externalTeamId])
+}
+
+model Roster {
+  id         String   @id @default(cuid())
+  teamId     String
+  snapshotAt DateTime @default(now())
+  // Denormalized player snapshot per sync (roadmap.md section 4) — shape settles once
+  // Phase 1's Sleeper sync is built, so this stays JSON rather than a rigid join table for now.
+  players    Json
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model Player {
+  canonicalId         String  @id
+  name                String
+  position            String
+  nflTeam             String?
+  byeWeek             Int?
+  // Maps this canonical player to platform-specific IDs (Sleeper, ESPN), keyed by platform name.
+  platformIdCrosswalk Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
