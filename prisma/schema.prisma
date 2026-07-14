@@ -95,6 +95,8 @@ model League {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([platform, externalLeagueId])
 }
 
 model Team {
@@ -102,6 +104,11 @@ model Team {
   leagueId       String
   ownerId        String?
   externalTeamId String?
+  // Snapshot of the platform-reported owner/team name, refreshed on every sync.
+  // Shown in the UI before Phase 2's invite/claim flow links a real User to ownerId.
+  platformDisplayName String?
+  platformTeamName    String?
+  platformAvatarUrl   String?
 
   league  League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
   owner   User?    @relation(fields: [ownerId], references: [id])
