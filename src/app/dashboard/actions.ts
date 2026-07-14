@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { SleeperProvider } from "@/lib/providers/league/sleeper/SleeperProvider";
@@ -39,10 +40,14 @@ export async function syncSleeperLeagueAction(
     return { error: "Couldn't sync that league. Double-check the Sleeper league ID and try again." };
   }
 
-  await refreshSleeperPlayerCrosswalkIfStale({
-    clock: createUpstashPlayerCrosswalkClock(),
-    prisma,
-  });
+  // The full Sleeper player list refresh (thousands of upserts) must not block the redirect —
+  // it runs after the response is sent, gated by its own daily-staleness check either way.
+  after(() =>
+    refreshSleeperPlayerCrosswalkIfStale({
+      clock: createUpstashPlayerCrosswalkClock(),
+      prisma,
+    }),
+  );
 
   redirect(`/leagues/${leagueId}`);
 }

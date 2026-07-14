@@ -2,11 +2,13 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 const authMock = vi.hoisted(() => vi.fn());
 const redirectMock = vi.hoisted(() => vi.fn());
+const afterMock = vi.hoisted(() => vi.fn());
 const syncSleeperLeagueMock = vi.hoisted(() => vi.fn());
 const refreshCrosswalkMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/auth", () => ({ auth: authMock }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
+vi.mock("next/server", () => ({ after: afterMock }));
 vi.mock("@/lib/leagueSync/syncSleeperLeague", () => ({ syncSleeperLeague: syncSleeperLeagueMock }));
 vi.mock("@/lib/providers/league/sleeper/refreshPlayerCrosswalk", () => ({
   refreshSleeperPlayerCrosswalkIfStale: refreshCrosswalkMock,
@@ -31,6 +33,7 @@ describe("syncSleeperLeagueAction", () => {
   beforeEach(() => {
     authMock.mockReset();
     redirectMock.mockReset();
+    afterMock.mockReset();
     syncSleeperLeagueMock.mockReset();
     refreshCrosswalkMock.mockReset().mockResolvedValue({ refreshed: false, playersUpserted: 0 });
   });
@@ -63,6 +66,19 @@ describe("syncSleeperLeagueAction", () => {
       expect.objectContaining({ externalLeagueId: "1347028745252257792", syncingUserId: "user-1" }),
     );
     expect(redirectMock).toHaveBeenCalledWith("/leagues/league-abc");
+  });
+
+  it("defers the player crosswalk refresh via after() instead of blocking the redirect", async () => {
+    authMock.mockResolvedValue({ user: { id: "user-1" } });
+    syncSleeperLeagueMock.mockResolvedValue({ leagueId: "league-abc" });
+
+    await syncSleeperLeagueAction({ error: null }, formDataWith("1347028745252257792"));
+
+    expect(refreshCrosswalkMock).not.toHaveBeenCalled();
+    expect(afterMock).toHaveBeenCalledTimes(1);
+
+    await afterMock.mock.calls[0]![0]();
+    expect(refreshCrosswalkMock).toHaveBeenCalledTimes(1);
   });
 
   it("returns a friendly error and does not redirect when the sync fails", async () => {

@@ -34,4 +34,23 @@ describe("SyncLeagueForm", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/couldn't sync that league/i);
   });
+
+  it("replaces the form with a loading indicator while the sync is pending", async () => {
+    let resolveAction!: (value: { error: string | null }) => void;
+    syncSleeperLeagueActionMock.mockReturnValue(
+      new Promise((resolve) => {
+        resolveAction = resolve;
+      }),
+    );
+    const user = userEvent.setup();
+    render(<SyncLeagueForm />);
+
+    await user.type(screen.getByLabelText(/sleeper league id/i), "1347028745252257792");
+    await user.click(screen.getByRole("button", { name: /sync league/i }));
+
+    expect(await screen.findByText(/syncing/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/sleeper league id/i)).not.toBeInTheDocument();
+
+    resolveAction({ error: null });
+  });
 });
