@@ -50,6 +50,7 @@ export async function getTeamRosterView({
         canonicalPlayerId: rosterPlayer.canonicalPlayerId,
         name: player?.name ?? null,
         position: player?.position ?? null,
+        nflTeam: player?.nflTeam ?? null,
         rosterSlot: rosterPlayer.rosterSlot,
       };
     }),

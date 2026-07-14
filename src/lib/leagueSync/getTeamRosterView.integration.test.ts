@@ -85,8 +85,8 @@ describe("getTeamRosterView (Prisma integration)", () => {
     expect(view!.teamName).toBe("Alice's Aces");
     expect(view!.avatarUrl).toBe("https://sleepercdn.com/avatars/abc");
     expect(view!.players).toEqual([
-      { canonicalPlayerId: `${testRunId}-p1`, name: "Known Player", position: "RB", rosterSlot: "RB" },
-      { canonicalPlayerId: `${testRunId}-p2`, name: "Fetched Player", position: "WR", rosterSlot: null },
+      { canonicalPlayerId: `${testRunId}-p1`, name: "Known Player", position: "RB", nflTeam: null, rosterSlot: "RB" },
+      { canonicalPlayerId: `${testRunId}-p2`, name: "Fetched Player", position: "WR", nflTeam: "KC", rosterSlot: null },
     ]);
     expect(fetchImpl).toHaveBeenCalled();
   });

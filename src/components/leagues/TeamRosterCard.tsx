@@ -2,6 +2,7 @@ export interface TeamRosterPlayer {
   canonicalPlayerId: string;
   name: string | null;
   position: string | null;
+  nflTeam: string | null;
   /** The league's starting slot this player fills (e.g. "QB", "FLEX"), or null if benched. */
   rosterSlot: string | null;
 }

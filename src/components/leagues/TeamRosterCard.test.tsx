@@ -8,9 +8,9 @@ describe("TeamRosterCard", () => {
       <TeamRosterCard
         teamName="Alice's Aces"
         players={[
-          { canonicalPlayerId: "100", name: "Starter QB", position: "QB", rosterSlot: "QB" },
-          { canonicalPlayerId: "101", name: "Starter Flex", position: "WR", rosterSlot: "FLEX" },
-          { canonicalPlayerId: "102", name: "Bench Guy", position: "RB", rosterSlot: null },
+          { canonicalPlayerId: "100", name: "Starter QB", position: "QB", nflTeam: "KC", rosterSlot: "QB" },
+          { canonicalPlayerId: "101", name: "Starter Flex", position: "WR", nflTeam: "MIA", rosterSlot: "FLEX" },
+          { canonicalPlayerId: "102", name: "Bench Guy", position: "RB", nflTeam: "SF", rosterSlot: null },
         ]}
       />,
     );
@@ -31,7 +31,7 @@ describe("TeamRosterCard", () => {
     render(
       <TeamRosterCard
         teamName="Team X"
-        players={[{ canonicalPlayerId: "100", name: "Starter QB", position: "QB", rosterSlot: "QB" }]}
+        players={[{ canonicalPlayerId: "100", name: "Starter QB", position: "QB", nflTeam: "KC", rosterSlot: "QB" }]}
       />,
     );
 
@@ -42,7 +42,7 @@ describe("TeamRosterCard", () => {
     render(
       <TeamRosterCard
         teamName="Team X"
-        players={[{ canonicalPlayerId: "999", name: null, position: null, rosterSlot: "QB" }]}
+        players={[{ canonicalPlayerId: "999", name: null, position: null, nflTeam: null, rosterSlot: "QB" }]}
       />,
     );
 
