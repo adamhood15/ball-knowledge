@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { EmptyDashboardState } from "@/components/dashboard/EmptyDashboardState";
+import { SyncLeagueForm } from "@/components/dashboard/SyncLeagueForm";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -21,15 +23,18 @@ export default async function DashboardPage() {
       ) : (
         <ul className="mx-auto flex w-full max-w-lg flex-col gap-3">
           {leaguesOwnedByUser.map((league) => (
-            <li
-              key={league.id}
-              className="rounded-lg border border-card-border/30 bg-background p-4 text-body-text"
-            >
-              {league.name}
+            <li key={league.id}>
+              <Link
+                href={`/leagues/${league.id}`}
+                className="block rounded-lg border border-card-border/30 bg-background p-4 text-body-text hover:border-card-border/60"
+              >
+                {league.name}
+              </Link>
             </li>
           ))}
         </ul>
       )}
+      <SyncLeagueForm />
     </div>
   );
 }
