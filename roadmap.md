@@ -112,6 +112,17 @@ Each phase below is a milestone: build it, test it, ship it, then move on. Do no
 
 **Definition of done:** a user links a Sleeper league and sees all team rosters and the league's actual scoring settings in the UI.
 
+**Phase 1 refinements (post-review, before merge):** real usage against the PR turned up gaps the original scope missed. Folded into Phase 1 rather than treated as scope creep, since they're corrections to what "sees all team rosters and scoring settings" should actually mean, not new features:
+- **Sync performance**: the initial implementation blocked the sync action on a full ~12k-player crosswalk refresh (Sleeper's entire player list) before redirecting to the league page. The crosswalk refresh must not block the user-visible sync — defer it to run after the response (e.g. Next.js `after()`), so syncing a league only waits on the three fast per-league Sleeper calls (league info, rosters, members).
+- **Sync loading state**: swap the sync form out for a loading indicator while the sync is pending, rather than just disabling the submit button.
+- **Team ownership (narrow slice of Phase 2's invite/claim flow, pulled forward)**: the syncing user needs a way to tell the app which of the synced rosters is their own team (`Team.ownerId` on one roster). This is deliberately scoped small — just the syncing user identifying their own team — not the full commissioner-invites-teammates-by-email flow, which stays in Phase 2 as planned.
+- **Roster slot data model**: `LeagueProviderRosterPlayer` needs to carry which specific starting slot a player occupies (e.g. `"QB"`, `"RB"`, `"FLEX"`), not just an `isStarter` boolean — derived by pairing Sleeper's per-roster `starters[]` array with the league's non-bench `roster_positions[]` prefix, in order. Without this, the UI has no way to display rosters in the league's actual configured slot order.
+- **Roster display order**: starters must always render in the league's configured slot order (e.g. QB, RB, RB, WR, WR, TE, FLEX, FLEX, DEF, then bench), not in whatever order the platform happens to return them.
+- **Roster table format**: two columns — slot (or, for bench rows, the player's real position) on the left, player name on the right — with a "Bench" separator row between starters and bench players.
+- **Scoring settings placement**: not shown inline on the main league page; moved to its own linked sub-page (`/leagues/[leagueId]/scoring`) so the roster view isn't dominated by a long stat table.
+- **Scoring settings labels**: stat categories must use human-readable labels (e.g. "Block Kick", not `blk_kick`), not Sleeper's raw internal stat codes.
+- **Scoring settings order**: grouped by category — QB/passing stats first, then RB/rushing, then WR/receiving, then defense/DST, then special teams/kicking — rather than whatever order the platform's raw JSON happens to have.
+
 ### Phase 2 — Manual scoring settings + league setup + member invites
 - Scoring settings form (all standard stat categories, editable point values), with PPR / Half-PPR / Standard as selectable presets that populate the reception point value, plus full manual override of any individual stat category
 - Roster construction form: configurable starting lineup slots and counts per position (supports standard 1QB layouts as well as two-QB, superflex, and multi-flex leagues) — this feeds `rosterConstruction` and must be read by every module built in later phases rather than assumed
