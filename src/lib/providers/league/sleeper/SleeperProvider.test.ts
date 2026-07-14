@@ -34,11 +34,11 @@ describe("SleeperProvider", () => {
     expect(info.scoringSettings.rec).toBe(0.5);
   });
 
-  it("getRosters returns each team's players with starters flagged", async () => {
+  it("getRosters assigns each starter its specific roster slot, in the league's slot order, with bench players trailing and null-slotted", async () => {
     const fetchImpl = fakeFetch({ [`/league/${leagueId}/rosters`]: rostersFixture });
     const provider = new SleeperProvider(fetchImpl);
 
-    const rosters = await provider.getRosters(leagueId);
+    const rosters = await provider.getRosters(leagueId, leagueFixture.roster_positions);
 
     expect(rosters).toHaveLength(rostersFixture.length);
     const firstRoster = rosters[0]!;
@@ -47,10 +47,20 @@ describe("SleeperProvider", () => {
     expect(firstRoster.ownerExternalUserId).toBe(firstFixtureRoster.owner_id);
     expect(firstRoster.players).toHaveLength(firstFixtureRoster.players.length);
 
-    const starterIds = new Set(firstFixtureRoster.starters.filter((id) => id !== "0"));
+    const startingSlotLabels = leagueFixture.roster_positions.filter((slot) => slot !== "BN");
+    const expectedSlotByPlayerId = new Map<string, string>();
+    firstFixtureRoster.starters.forEach((playerId, index) => {
+      if (playerId !== "0") expectedSlotByPlayerId.set(playerId, startingSlotLabels[index]!);
+    });
+
     for (const player of firstRoster.players) {
-      expect(player.isStarter).toBe(starterIds.has(player.canonicalPlayerId));
+      expect(player.rosterSlot).toBe(expectedSlotByPlayerId.get(player.canonicalPlayerId) ?? null);
     }
+
+    const starterCanonicalIdsInOrder = firstRoster.players
+      .filter((player) => player.rosterSlot !== null)
+      .map((player) => player.canonicalPlayerId);
+    expect(starterCanonicalIdsInOrder).toEqual([...expectedSlotByPlayerId.keys()]);
   });
 
   it("getScoringSettings returns the league's raw stat category point values", async () => {

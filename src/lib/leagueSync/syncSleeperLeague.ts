@@ -13,9 +13,9 @@ export async function syncSleeperLeague({
   externalLeagueId: string;
   syncingUserId: string;
 }): Promise<{ leagueId: string }> {
-  const [leagueInfo, rosters, members] = await Promise.all([
-    leagueProvider.getLeagueInfo(externalLeagueId),
-    leagueProvider.getRosters(externalLeagueId),
+  const leagueInfo = await leagueProvider.getLeagueInfo(externalLeagueId);
+  const [rosters, members] = await Promise.all([
+    leagueProvider.getRosters(externalLeagueId, leagueInfo.rosterPositionSlots),
     leagueProvider.getLeagueMembers(externalLeagueId),
   ]);
 
@@ -61,7 +61,7 @@ export async function syncSleeperLeague({
         teamId: team.id,
         players: roster.players.map((rosterPlayer) => ({
           canonicalPlayerId: rosterPlayer.canonicalPlayerId,
-          isStarter: rosterPlayer.isStarter,
+          rosterSlot: rosterPlayer.rosterSlot,
         })),
       },
     });

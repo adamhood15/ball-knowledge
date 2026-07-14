@@ -53,17 +53,35 @@ export class SleeperProvider implements LeagueProvider {
     };
   }
 
-  async getRosters(externalLeagueId: string): Promise<LeagueProviderRoster[]> {
+  async getRosters(
+    externalLeagueId: string,
+    rosterPositionSlots: string[],
+  ): Promise<LeagueProviderRoster[]> {
     const rosters = await this.fetchJson<SleeperRosterResponse[]>(`/league/${externalLeagueId}/rosters`);
+    // Sleeper's per-roster `starters` array is positionally parallel to the league's non-bench
+    // roster_positions prefix: starters[i] fills the slot named at startingSlotLabels[i]. An
+    // unfilled slot is represented as the literal string "0".
+    const startingSlotLabels = rosterPositionSlots.filter((slot) => slot !== "BN");
+
     return rosters.map((roster) => {
-      const starterPlayerIds = new Set((roster.starters ?? []).filter((playerId) => playerId !== "0"));
+      const startingSlotByPlayerId = new Map<string, string>();
+      (roster.starters ?? []).forEach((playerId, slotIndex) => {
+        if (playerId !== "0") startingSlotByPlayerId.set(playerId, startingSlotLabels[slotIndex] ?? "FLEX");
+      });
+
+      const startingPlayerIdsInSlotOrder = (roster.starters ?? []).filter((playerId) => playerId !== "0");
+      const benchPlayerIds = (roster.players ?? []).filter((playerId) => !startingSlotByPlayerId.has(playerId));
+
       return {
         externalTeamId: String(roster.roster_id),
         ownerExternalUserId: roster.owner_id,
-        players: (roster.players ?? []).map((canonicalPlayerId) => ({
-          canonicalPlayerId,
-          isStarter: starterPlayerIds.has(canonicalPlayerId),
-        })),
+        players: [
+          ...startingPlayerIdsInSlotOrder.map((canonicalPlayerId) => ({
+            canonicalPlayerId,
+            rosterSlot: startingSlotByPlayerId.get(canonicalPlayerId)!,
+          })),
+          ...benchPlayerIds.map((canonicalPlayerId) => ({ canonicalPlayerId, rosterSlot: null })),
+        ],
       };
     });
   }

@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import leagueFixture from "@/lib/providers/league/sleeper/__fixtures__/league.json";
 import rostersFixture from "@/lib/providers/league/sleeper/__fixtures__/rosters.json";
 import usersFixture from "@/lib/providers/league/sleeper/__fixtures__/users.json";
@@ -28,6 +28,15 @@ describe("syncSleeperLeague (Prisma integration)", () => {
   let commissionerUserId: string;
   let otherUserId: string;
   let syncedLeagueId: string;
+
+  beforeAll(async () => {
+    // Defends against a stale row left behind by a prior interrupted run — this fixture's
+    // externalLeagueId is a real league ID, so a leaked row here would silently break the
+    // "commissioner is preserved" assertions below by attaching to someone else's league.
+    await prisma.league.deleteMany({
+      where: { platform: "SLEEPER", externalLeagueId: leagueFixture.league_id },
+    });
+  });
 
   afterAll(async () => {
     if (syncedLeagueId) await prisma.league.delete({ where: { id: syncedLeagueId } }).catch(() => {});
@@ -70,7 +79,13 @@ describe("syncSleeperLeague (Prisma integration)", () => {
 
     const firstTeam = league.teams.find((team) => team.externalTeamId === String(rostersFixture[0]!.roster_id))!;
     expect(firstTeam.rosters).toHaveLength(1);
-    expect(firstTeam.rosters[0]!.players).toHaveLength(rostersFixture[0]!.players.length);
+    const storedPlayers = firstTeam.rosters[0]!.players as { canonicalPlayerId: string; rosterSlot: string | null }[];
+    expect(storedPlayers).toHaveLength(rostersFixture[0]!.players.length);
+    const firstStarterId = rostersFixture[0]!.starters.find((id) => id !== "0")!;
+    const firstStarter = storedPlayers.find((p) => p.canonicalPlayerId === firstStarterId)!;
+    expect(firstStarter.rosterSlot).toBe(leagueFixture.roster_positions[0]);
+    const benchPlayer = storedPlayers.find((p) => p.rosterSlot === null);
+    expect(benchPlayer).toBeDefined();
   });
 
   it("re-syncing updates league settings and appends a new roster snapshot, without changing the commissioner", async () => {

@@ -10,12 +10,14 @@ export interface LeagueProviderLeagueInfo {
 
 export interface LeagueProviderRosterPlayer {
   canonicalPlayerId: string;
-  isStarter: boolean;
+  /** The specific starting slot this player fills (e.g. "QB", "RB", "FLEX"), or null if benched. */
+  rosterSlot: string | null;
 }
 
 export interface LeagueProviderRoster {
   externalTeamId: string;
   ownerExternalUserId: string | null;
+  /** Starters first, in the league's configured slot order, then bench players. */
   players: LeagueProviderRosterPlayer[];
 }
 
@@ -28,7 +30,8 @@ export interface LeagueProviderMember {
 
 export interface LeagueProvider {
   getLeagueInfo(externalLeagueId: string): Promise<LeagueProviderLeagueInfo>;
-  getRosters(externalLeagueId: string): Promise<LeagueProviderRoster[]>;
+  /** rosterPositionSlots (from getLeagueInfo) determines each starter's rosterSlot label. */
+  getRosters(externalLeagueId: string, rosterPositionSlots: string[]): Promise<LeagueProviderRoster[]>;
   getScoringSettings(externalLeagueId: string): Promise<Record<string, number>>;
   getLeagueMembers(externalLeagueId: string): Promise<LeagueProviderMember[]>;
 }
