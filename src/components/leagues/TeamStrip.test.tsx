@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { TeamStrip } from "@/components/leagues/TeamStrip";
 
 describe("TeamStrip", () => {
-  it("links each team to its roster page and highlights the selected one", () => {
+  it("links each team to its own roster page, one per row", () => {
     render(
       <TeamStrip
         leagueId="league-1"
@@ -11,7 +11,6 @@ describe("TeamStrip", () => {
           { teamId: "team-1", teamName: "Alice's Aces", avatarUrl: null },
           { teamId: "team-2", teamName: "Bob's Team", avatarUrl: null },
         ]}
-        selectedTeamId="team-2"
       />,
     );
 

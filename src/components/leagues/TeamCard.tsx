@@ -15,7 +15,7 @@ export function TeamCard({
     <div
       className={[
         "flex items-center gap-3 rounded-lg border transition-all duration-150",
-        isGrid ? "aspect-square w-full flex-col justify-center p-4 text-center" : "px-3 py-2",
+        isGrid ? "aspect-square w-full flex-col justify-center p-4 text-center" : "w-full px-3 py-2",
         isSelected ? "border-card-border shadow-[0_0_16px_var(--color-card-border)]" : "border-card-border/30",
         "hover:border-card-border hover:shadow-[0_0_16px_var(--color-card-border)]",
       ].join(" ")}

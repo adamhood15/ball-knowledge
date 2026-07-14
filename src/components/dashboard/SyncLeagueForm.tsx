@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { syncSleeperLeagueAction, type SyncLeagueActionState } from "@/app/dashboard/actions";
+import { Button } from "@/components/ui/Button";
 
 const initialState: SyncLeagueActionState = { error: null };
 
@@ -37,12 +38,7 @@ export function SyncLeagueForm() {
         className="rounded-md border border-card-border/30 bg-background px-3 py-2 text-body-text"
         required
       />
-      <button
-        type="submit"
-        className="rounded-md border border-card-border/60 px-4 py-2 text-body-text"
-      >
-        Sync league
-      </button>
+      <Button type="submit">Sync league</Button>
       {state.error ? (
         <p role="alert" className="text-sm text-secondary-accent">
           {state.error}
