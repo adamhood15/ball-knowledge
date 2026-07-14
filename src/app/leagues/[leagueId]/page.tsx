@@ -1,12 +1,14 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { ScoringSettingsTable } from "@/components/leagues/ScoringSettingsTable";
 import { TeamRosterCard, type TeamRosterPlayer } from "@/components/leagues/TeamRosterCard";
+import { ClaimTeamButton } from "@/components/leagues/ClaimTeamButton";
+import { claimTeamAction } from "@/app/leagues/[leagueId]/actions";
 
 interface RosterSnapshotPlayer {
   canonicalPlayerId: string;
-  isStarter: boolean;
+  rosterSlot: string | null;
 }
 
 export default async function LeagueDetailPage({ params }: { params: Promise<{ leagueId: string }> }) {
@@ -47,10 +49,11 @@ export default async function LeagueDetailPage({ params }: { params: Promise<{ l
 
   return (
     <div className="flex flex-1 flex-col gap-8 px-4 py-10">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-2">
+      <div className="mx-auto flex w-full max-w-4xl items-baseline justify-between gap-2">
         <h1 className="font-display text-2xl text-body-text">{league.name}</h1>
-        <p className="text-sm text-muted-text">Scoring settings</p>
-        <ScoringSettingsTable scoringSettings={(league.scoringSettings as Record<string, number>) ?? {}} />
+        <Link href={`/leagues/${league.id}/scoring`} className="text-sm text-secondary-accent hover:underline">
+          View scoring settings
+        </Link>
       </div>
 
       <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2">
@@ -63,16 +66,24 @@ export default async function LeagueDetailPage({ params }: { params: Promise<{ l
               canonicalPlayerId: rosterPlayer.canonicalPlayerId,
               name: player?.name ?? null,
               position: player?.position ?? null,
-              isStarter: rosterPlayer.isStarter,
+              rosterSlot: rosterPlayer.rosterSlot,
             };
           });
 
+          const isOwnedByCurrentUser = team.ownerId === session.user!.id;
+
           return (
-            <TeamRosterCard
-              key={team.id}
-              teamName={team.platformTeamName ?? team.platformDisplayName ?? `Team ${team.externalTeamId}`}
-              players={teamRosterPlayers}
-            />
+            <div key={team.id} className="flex flex-col gap-1">
+              {isOwnedByCurrentUser ? (
+                <span className="text-xs text-secondary-accent">★ Your team</span>
+              ) : (
+                <ClaimTeamButton leagueId={league.id} teamId={team.id} claimTeamAction={claimTeamAction} />
+              )}
+              <TeamRosterCard
+                teamName={team.platformTeamName ?? team.platformDisplayName ?? `Team ${team.externalTeamId}`}
+                players={teamRosterPlayers}
+              />
+            </div>
           );
         })}
       </div>
