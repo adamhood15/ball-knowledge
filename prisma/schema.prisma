@@ -108,6 +108,7 @@ model Team {
   // Shown in the UI before Phase 2's invite/claim flow links a real User to ownerId.
   platformDisplayName String?
   platformTeamName    String?
+  platformAvatarUrl   String?
 
   league  League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
   owner   User?    @relation(fields: [ownerId], references: [id])

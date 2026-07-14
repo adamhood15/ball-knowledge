@@ -49,10 +49,12 @@ export async function syncSleeperLeague({
         externalTeamId: roster.externalTeamId,
         platformDisplayName: member?.displayName ?? null,
         platformTeamName: member?.teamName ?? null,
+        platformAvatarUrl: member?.avatarUrl ?? null,
       },
       update: {
         platformDisplayName: member?.displayName ?? null,
         platformTeamName: member?.teamName ?? null,
+        platformAvatarUrl: member?.avatarUrl ?? null,
       },
     });
 

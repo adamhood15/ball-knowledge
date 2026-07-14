@@ -78,6 +78,9 @@ describe("syncSleeperLeague (Prisma integration)", () => {
     expect(league.teams).toHaveLength(rostersFixture.length);
 
     const firstTeam = league.teams.find((team) => team.externalTeamId === String(rostersFixture[0]!.roster_id))!;
+    const firstFixtureRoster = rostersFixture[0]!;
+    const firstFixtureOwner = usersFixture.find((user) => user.user_id === firstFixtureRoster.owner_id);
+    expect(firstTeam.platformAvatarUrl).toBe(`https://sleepercdn.com/avatars/${firstFixtureOwner!.avatar}`);
     expect(firstTeam.rosters).toHaveLength(1);
     const storedPlayers = firstTeam.rosters[0]!.players as { canonicalPlayerId: string; rosterSlot: string | null }[];
     expect(storedPlayers).toHaveLength(rostersFixture[0]!.players.length);
