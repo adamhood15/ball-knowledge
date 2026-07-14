@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import playersSubsetFixture from "./__fixtures__/players-subset.json";
-import { refreshSleeperPlayerCrosswalkIfStale } from "@/lib/providers/league/sleeper/refreshPlayerCrosswalk";
+import {
+  ensurePlayersResolvable,
+  refreshSleeperPlayerCrosswalkIfStale,
+} from "@/lib/providers/league/sleeper/refreshPlayerCrosswalk";
 import type { PlayerCrosswalkClock } from "@/lib/providers/league/sleeper/playerCrosswalkClock";
 
 function fakeClock(lastRefreshedAt: Date | null): PlayerCrosswalkClock & { setLastRefreshedAtCalls: Date[] } {
@@ -24,13 +27,18 @@ function fakeFetch() {
   })) as unknown as typeof fetch;
 }
 
-function fakePlayerUpsertClient() {
+function fakePlayerUpsertClient(existingCanonicalIds: string[] = []) {
   const upsertCalls: unknown[] = [];
   return {
     upsertCalls,
     player: {
       async upsert(args: unknown) {
         upsertCalls.push(args);
+      },
+      async findMany({ where }: { where: { canonicalId: { in: string[] } } }) {
+        return where.canonicalId.in
+          .filter((id) => existingCanonicalIds.includes(id))
+          .map((canonicalId) => ({ canonicalId }));
       },
     },
   };
@@ -74,5 +82,57 @@ describe("refreshSleeperPlayerCrosswalkIfStale", () => {
     expect(prisma.upsertCalls.length).toBe(result.playersUpserted);
     expect(prisma.upsertCalls.length).toBeGreaterThan(0);
     expect(clock.setLastRefreshedAtCalls).toEqual([now]);
+  });
+});
+
+describe("ensurePlayersResolvable", () => {
+  it("does nothing when every requested player is already crosswalked", async () => {
+    const clock = fakeClock(new Date());
+    const fetchImpl = fakeFetch();
+    const prisma = fakePlayerUpsertClient(["100", "200"]);
+
+    await ensurePlayersResolvable({
+      clock,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      prisma: prisma as any,
+      canonicalPlayerIds: ["100", "200"],
+      fetchImpl,
+    });
+
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("does nothing when given an empty list of player IDs", async () => {
+    const clock = fakeClock(null);
+    const fetchImpl = fakeFetch();
+    const prisma = fakePlayerUpsertClient();
+
+    await ensurePlayersResolvable({
+      clock,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      prisma: prisma as any,
+      canonicalPlayerIds: [],
+      fetchImpl,
+    });
+
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("forces a full refresh when a requested player is missing, even if the crosswalk isn't stale", async () => {
+    const clock = fakeClock(new Date()); // fresh — routine refresh would normally skip
+    const fetchImpl = fakeFetch();
+    const prisma = fakePlayerUpsertClient(["100"]); // "999" is missing
+
+    await ensurePlayersResolvable({
+      clock,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      prisma: prisma as any,
+      canonicalPlayerIds: ["100", "999"],
+      fetchImpl,
+    });
+
+    expect(fetchImpl).toHaveBeenCalledWith("https://api.sleeper.app/v1/players/nfl");
+    expect(prisma.upsertCalls.length).toBeGreaterThan(0);
+    expect(clock.setLastRefreshedAtCalls).toHaveLength(1);
   });
 });

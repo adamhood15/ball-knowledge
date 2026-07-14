@@ -70,3 +70,41 @@ export async function refreshSleeperPlayerCrosswalkIfStale({
   await clock.setLastRefreshedAt(now);
   return { refreshed: true, playersUpserted: fantasyRelevantPlayers.length };
 }
+
+/**
+ * Guarantees a roster's players resolve to real names before display. The routine daily
+ * refresh (above) is deliberately staleness-gated per Sleeper's guidance, but if a roster
+ * view finds a player missing from the crosswalk (e.g. it hasn't run yet, or a rookie was
+ * added mid-day), that's a correctness gap worth bypassing the gate for — never show
+ * "Unknown player" when a fresh fetch would fix it.
+ */
+export async function ensurePlayersResolvable({
+  clock,
+  prisma,
+  canonicalPlayerIds,
+  fetchImpl = fetch,
+  now = new Date(),
+}: {
+  clock: PlayerCrosswalkClock;
+  prisma: Pick<PrismaClient, "player">;
+  canonicalPlayerIds: string[];
+  fetchImpl?: FetchImpl;
+  now?: Date;
+}): Promise<void> {
+  if (canonicalPlayerIds.length === 0) return;
+
+  const existingPlayers = await prisma.player.findMany({
+    where: { canonicalId: { in: canonicalPlayerIds } },
+    select: { canonicalId: true },
+  });
+  const existingIds = new Set(existingPlayers.map((player) => player.canonicalId));
+  const hasMissingPlayers = canonicalPlayerIds.some((id) => !existingIds.has(id));
+  if (!hasMissingPlayers) return;
+
+  await refreshSleeperPlayerCrosswalkIfStale({
+    clock: { getLastRefreshedAt: async () => null, setLastRefreshedAt: clock.setLastRefreshedAt },
+    prisma,
+    fetchImpl,
+    now,
+  });
+}
