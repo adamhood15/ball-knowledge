@@ -34,6 +34,29 @@ describe("SleeperProvider", () => {
     expect(info.scoringSettings.rec).toBe(0.5);
   });
 
+  it("getLeagueInfo maps Sleeper's settings.type 2 to DYNASTY", async () => {
+    // The fixture is a real recorded dynasty league response (settings.type === 2).
+    expect(leagueFixture.settings.type).toBe(2);
+    const fetchImpl = fakeFetch({ [`/league/${leagueId}`]: leagueFixture });
+    const provider = new SleeperProvider(fetchImpl);
+
+    const info = await provider.getLeagueInfo(leagueId);
+
+    expect(info.leagueMode).toBe("DYNASTY");
+  });
+
+  it("getLeagueInfo maps Sleeper's settings.type 0 (redraft) and 1 (keeper) to REDRAFT", async () => {
+    for (const type of [0, 1]) {
+      const redraftFixture = { ...leagueFixture, settings: { ...leagueFixture.settings, type } };
+      const fetchImpl = fakeFetch({ [`/league/${leagueId}`]: redraftFixture });
+      const provider = new SleeperProvider(fetchImpl);
+
+      const info = await provider.getLeagueInfo(leagueId);
+
+      expect(info.leagueMode).toBe("REDRAFT");
+    }
+  });
+
   it("getRosters assigns each starter its specific roster slot, in the league's slot order, with bench players trailing and null-slotted", async () => {
     const fetchImpl = fakeFetch({ [`/league/${leagueId}/rosters`]: rostersFixture });
     const provider = new SleeperProvider(fetchImpl);

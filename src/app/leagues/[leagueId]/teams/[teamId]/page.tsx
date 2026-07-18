@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getTeamRosterView } from "@/lib/leagueSync/getTeamRosterView";
-import { createUpstashPlayerCrosswalkClock } from "@/lib/providers/league/sleeper/playerCrosswalkClock";
 import { TeamRosterCard } from "@/components/leagues/TeamRosterCard";
+import { TeamCard } from "@/components/leagues/TeamCard";
 
 export default async function LeagueTeamDetailPage({
   params,
@@ -21,11 +21,7 @@ export default async function LeagueTeamDetailPage({
     notFound();
   }
 
-  const rosterView = await getTeamRosterView({
-    prisma,
-    teamId,
-    clock: createUpstashPlayerCrosswalkClock(),
-  });
+  const rosterView = await getTeamRosterView({ prisma, teamId });
   if (!rosterView) {
     notFound();
   }
@@ -35,7 +31,7 @@ export default async function LeagueTeamDetailPage({
   return (
     <div className="flex flex-1 flex-col gap-4 px-4 py-10">
       <div className="mx-auto flex w-full max-w-md flex-col gap-2">
-        <h1 className="font-display text-xl text-body-text">{rosterView.teamName}</h1>
+        <TeamCard teamName={rosterView.teamName} avatarUrl={rosterView.avatarUrl} variant="row" />
         {!isOwnTeam ? (
           <Link
             href={`/leagues/${leagueId}/trade/${teamId}`}
@@ -49,7 +45,7 @@ export default async function LeagueTeamDetailPage({
         ) : null}
       </div>
       <div className="mx-auto w-full max-w-md">
-        <TeamRosterCard teamName={rosterView.teamName} players={rosterView.players} />
+        <TeamRosterCard players={rosterView.players} />
       </div>
     </div>
   );

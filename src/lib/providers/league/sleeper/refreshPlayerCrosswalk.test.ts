@@ -87,12 +87,10 @@ describe("refreshSleeperPlayerCrosswalkIfStale", () => {
 
 describe("ensurePlayersResolvable", () => {
   it("does nothing when every requested player is already crosswalked", async () => {
-    const clock = fakeClock(new Date());
     const fetchImpl = fakeFetch();
     const prisma = fakePlayerUpsertClient(["100", "200"]);
 
     await ensurePlayersResolvable({
-      clock,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       prisma: prisma as any,
       canonicalPlayerIds: ["100", "200"],
@@ -103,12 +101,10 @@ describe("ensurePlayersResolvable", () => {
   });
 
   it("does nothing when given an empty list of player IDs", async () => {
-    const clock = fakeClock(null);
     const fetchImpl = fakeFetch();
     const prisma = fakePlayerUpsertClient();
 
     await ensurePlayersResolvable({
-      clock,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       prisma: prisma as any,
       canonicalPlayerIds: [],
@@ -118,21 +114,21 @@ describe("ensurePlayersResolvable", () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
-  it("forces a full refresh when a requested player is missing, even if the crosswalk isn't stale", async () => {
-    const clock = fakeClock(new Date()); // fresh — routine refresh would normally skip
+  it("fetches and upserts only the specific players missing from the crosswalk, not the entire player list", async () => {
     const fetchImpl = fakeFetch();
-    const prisma = fakePlayerUpsertClient(["100"]); // "999" is missing
+    const prisma = fakePlayerUpsertClient(["100"]); // only "421" (from the fixture) is missing
 
     await ensurePlayersResolvable({
-      clock,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       prisma: prisma as any,
-      canonicalPlayerIds: ["100", "999"],
+      canonicalPlayerIds: ["100", "421"],
       fetchImpl,
     });
 
     expect(fetchImpl).toHaveBeenCalledWith("https://api.sleeper.app/v1/players/nfl");
-    expect(prisma.upsertCalls.length).toBeGreaterThan(0);
-    expect(clock.setLastRefreshedAtCalls).toHaveLength(1);
+    // The fixture has 251 fantasy-relevant players — only the one actually missing should be
+    // upserted, not the whole list, or this path is exactly as slow as the routine full refresh.
+    expect(prisma.upsertCalls).toHaveLength(1);
+    expect((prisma.upsertCalls[0] as { where: { canonicalId: string } }).where.canonicalId).toBe("421");
   });
 });

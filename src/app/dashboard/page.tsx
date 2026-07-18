@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { EmptyDashboardState } from "@/components/dashboard/EmptyDashboardState";
 import { SyncLeagueForm } from "@/components/dashboard/SyncLeagueForm";
+import { LeagueModeBadge } from "@/components/leagues/LeagueModeBadge";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -26,9 +27,10 @@ export default async function DashboardPage() {
             <li key={league.id}>
               <Link
                 href={`/leagues/${league.id}`}
-                className="block rounded-lg border border-card-border/30 bg-background p-4 text-body-text hover:border-card-border/60"
+                className="flex items-center gap-3 rounded-lg border border-card-border/30 bg-background p-4 text-body-text hover:border-card-border/60"
               >
-                {league.name}
+                <span>{league.name}</span>
+                <LeagueModeBadge mode={league.mode} />
               </Link>
             </li>
           ))}

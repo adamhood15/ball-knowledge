@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getTeamRosterView } from "@/lib/leagueSync/getTeamRosterView";
-import { createUpstashPlayerCrosswalkClock } from "@/lib/providers/league/sleeper/playerCrosswalkClock";
 import { TradeBuilder } from "@/components/trade/TradeBuilder";
 
 export default async function TradeBuilderPage({
@@ -21,10 +20,9 @@ export default async function TradeBuilderPage({
     notFound();
   }
 
-  const clock = createUpstashPlayerCrosswalkClock();
   const [myRosterView, opponentRosterView] = await Promise.all([
-    getTeamRosterView({ prisma, teamId: myTeamRow.id, clock }),
-    getTeamRosterView({ prisma, teamId: opponentTeamRow.id, clock }),
+    getTeamRosterView({ prisma, teamId: myTeamRow.id }),
+    getTeamRosterView({ prisma, teamId: opponentTeamRow.id }),
   ]);
   if (!myRosterView || !opponentRosterView) {
     notFound();

@@ -2,6 +2,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { LeagueModeBadge } from "@/components/leagues/LeagueModeBadge";
+import { MyTeamIcon } from "@/components/icons/MyTeamIcon";
+import { LeagueIcon } from "@/components/icons/LeagueIcon";
+import { SettingsIcon } from "@/components/icons/SettingsIcon";
 
 export default async function LeagueLayout({
   children,
@@ -22,23 +26,27 @@ export default async function LeagueLayout({
     notFound();
   }
 
-  const navLinkClassName = "text-sm text-body-text hover:text-secondary-accent";
+  const navLinkClassName = "flex items-center gap-2 whitespace-nowrap text-sm text-body-text hover:text-secondary-accent";
 
   return (
     <div className="flex flex-1 flex-col">
-      <nav className="mx-auto flex w-full max-w-4xl gap-6 border-b border-card-border/20 px-4 py-3">
+      <header className="mx-auto flex w-full max-w-4xl items-center gap-3 px-4 pt-6">
+        <h1 className="font-display text-base text-body-text">{league.name}</h1>
+        <LeagueModeBadge mode={league.mode} />
+      </header>
+      <nav className="mx-auto flex w-full max-w-4xl gap-6 overflow-x-auto border-b border-card-border/20 px-4 py-3">
         <Link href={`/leagues/${leagueId}`} className={navLinkClassName}>
-          My Team
+          <MyTeamIcon className="h-5 w-5" />
+          Team
         </Link>
         <Link href={`/leagues/${leagueId}/teams`} className={navLinkClassName}>
+          <LeagueIcon className="h-5 w-5" />
           League
         </Link>
-        <Link href={`/leagues/${leagueId}/scoring`} className={navLinkClassName}>
-          Scoring Settings
+        <Link href={`/leagues/${leagueId}/settings`} className={navLinkClassName}>
+          <SettingsIcon className="h-5 w-5" />
+          Scoring
         </Link>
-        <span className="text-sm text-muted-text/50" title="Coming soon">
-          Trade
-        </span>
       </nav>
       {children}
     </div>

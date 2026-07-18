@@ -1,4 +1,5 @@
 import type {
+  LeagueMode,
   LeagueProvider,
   LeagueProviderLeagueInfo,
   LeagueProviderMember,
@@ -13,6 +14,14 @@ interface SleeperLeagueResponse {
   season: string;
   roster_positions: string[];
   scoring_settings: Record<string, number>;
+  settings: { type: number };
+}
+
+// Sleeper's settings.type: 0 = redraft, 1 = keeper, 2 = dynasty. Keeper leagues collapse into
+// REDRAFT since the app's LeagueMode is binary and a keeper league is much closer to redraft
+// (partial, limited retention) than to full dynasty (entire rosters carry over every year).
+function sleeperLeagueTypeToLeagueMode(sleeperLeagueType: number): LeagueMode {
+  return sleeperLeagueType === 2 ? "DYNASTY" : "REDRAFT";
 }
 
 interface SleeperRosterResponse {
@@ -50,6 +59,7 @@ export class SleeperProvider implements LeagueProvider {
       season: league.season,
       rosterPositionSlots: league.roster_positions,
       scoringSettings: league.scoring_settings,
+      leagueMode: sleeperLeagueTypeToLeagueMode(league.settings.type),
     };
   }
 

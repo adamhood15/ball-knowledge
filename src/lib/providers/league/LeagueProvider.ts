@@ -1,3 +1,5 @@
+export type LeagueMode = "REDRAFT" | "DYNASTY";
+
 export interface LeagueProviderLeagueInfo {
   externalLeagueId: string;
   name: string;
@@ -6,6 +8,7 @@ export interface LeagueProviderLeagueInfo {
   rosterPositionSlots: string[];
   /** Stat category -> point value, in the platform's own stat category naming. */
   scoringSettings: Record<string, number>;
+  leagueMode: LeagueMode;
 }
 
 export interface LeagueProviderRosterPlayer {

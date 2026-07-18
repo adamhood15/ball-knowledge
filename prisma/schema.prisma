@@ -132,14 +132,23 @@ model Roster {
 }
 
 model Player {
-  canonicalId         String  @id
-  name                String
-  position            String
-  nflTeam             String?
-  byeWeek             Int?
+  canonicalId    String @id
+  name           String
+  // Lowercased, apostrophe-stripped copy of `name` for search (e.g. "De'Von Achane" ->
+  // "devon achane"), so a query like "devon" matches without the user typing the apostrophe.
+  normalizedName String
+  position       String
+  nflTeam        String?
+  byeWeek        Int?
+  // Sleeper's own active/inactive flag — false once a player is no longer on an NFL roster
+  // (retired, out of the league, etc.). Search excludes inactive players; roster display does
+  // not, since a roster can still reference someone who went inactive after being drafted/added.
+  active         Boolean @default(true)
   // Maps this canonical player to platform-specific IDs (Sleeper, ESPN), keyed by platform name.
   platformIdCrosswalk Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([normalizedName])
 }

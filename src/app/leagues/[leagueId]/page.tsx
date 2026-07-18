@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getTeamRosterView } from "@/lib/leagueSync/getTeamRosterView";
-import { createUpstashPlayerCrosswalkClock } from "@/lib/providers/league/sleeper/playerCrosswalkClock";
 import { TeamRosterCard } from "@/components/leagues/TeamRosterCard";
 import { TeamCard } from "@/components/leagues/TeamCard";
 import { SelectTeamGrid } from "@/components/leagues/SelectTeamGrid";
@@ -38,11 +37,7 @@ export default async function MyTeamPage({ params }: { params: Promise<{ leagueI
     );
   }
 
-  const rosterView = await getTeamRosterView({
-    prisma,
-    teamId: myTeam.id,
-    clock: createUpstashPlayerCrosswalkClock(),
-  });
+  const rosterView = await getTeamRosterView({ prisma, teamId: myTeam.id });
 
   return (
     <div className="flex flex-1 flex-col gap-6 px-4 py-10">
@@ -50,7 +45,7 @@ export default async function MyTeamPage({ params }: { params: Promise<{ leagueI
         <TeamCard teamName={rosterView!.teamName} avatarUrl={rosterView!.avatarUrl} variant="row" isSelected />
       </div>
       <div className="mx-auto w-full max-w-md">
-        <TeamRosterCard teamName={rosterView!.teamName} players={rosterView!.players} />
+        <TeamRosterCard players={rosterView!.players} />
       </div>
     </div>
   );

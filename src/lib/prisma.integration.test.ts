@@ -45,6 +45,7 @@ describe("Prisma schema — Phase 0 core entities", () => {
       data: {
         canonicalId: `${testRunId}-player-1`,
         name: "Test Quarterback",
+        normalizedName: "test quarterback",
         position: "QB",
         nflTeam: "KC",
         byeWeek: 10,
