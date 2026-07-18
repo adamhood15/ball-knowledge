@@ -63,6 +63,8 @@ describe("syncSleeperLeague (Prisma integration)", () => {
 
     expect(league.platform).toBe("SLEEPER");
     expect(league.name).toBe(leagueFixture.name);
+    // Fixture is a real recorded dynasty league response (settings.type === 2).
+    expect(league.mode).toBe("DYNASTY");
     expect(league.createdByUserId).toBe(commissionerUserId);
     expect(league.scoringSettings).toEqual(leagueFixture.scoring_settings);
     expect(league.rosterConstruction).toEqual({

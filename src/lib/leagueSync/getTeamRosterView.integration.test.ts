@@ -1,16 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { getTeamRosterView } from "@/lib/leagueSync/getTeamRosterView";
-import type { PlayerCrosswalkClock } from "@/lib/providers/league/sleeper/playerCrosswalkClock";
 import { prisma } from "@/lib/prisma";
-
-function alwaysStaleClock(): PlayerCrosswalkClock {
-  return {
-    async getLastRefreshedAt() {
-      return null;
-    },
-    async setLastRefreshedAt() {},
-  };
-}
 
 describe("getTeamRosterView (Prisma integration)", () => {
   const testRunId = `test-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -39,7 +29,7 @@ describe("getTeamRosterView (Prisma integration)", () => {
     });
     teamId = team.id;
     await prisma.player.create({
-      data: { canonicalId: `${testRunId}-p1`, name: "Known Player", position: "RB" },
+      data: { canonicalId: `${testRunId}-p1`, name: "Known Player", normalizedName: "known player", position: "RB" },
     });
     await prisma.roster.create({
       data: {
@@ -60,12 +50,7 @@ describe("getTeamRosterView (Prisma integration)", () => {
   });
 
   it("returns null when the team doesn't exist", async () => {
-    const view = await getTeamRosterView({
-      prisma,
-      teamId: "nonexistent",
-      clock: alwaysStaleClock(),
-      fetchImpl: vi.fn(),
-    });
+    const view = await getTeamRosterView({ prisma, teamId: "nonexistent", fetchImpl: vi.fn() });
 
     expect(view).toBeNull();
   });
@@ -79,7 +64,7 @@ describe("getTeamRosterView (Prisma integration)", () => {
       }),
     })) as unknown as typeof fetch;
 
-    const view = await getTeamRosterView({ prisma, teamId, clock: alwaysStaleClock(), fetchImpl });
+    const view = await getTeamRosterView({ prisma, teamId, fetchImpl });
 
     expect(view).not.toBeNull();
     expect(view!.teamName).toBe("Alice's Aces");

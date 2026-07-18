@@ -1,6 +1,5 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 import { ensurePlayersResolvable } from "@/lib/providers/league/sleeper/refreshPlayerCrosswalk";
-import type { PlayerCrosswalkClock } from "@/lib/providers/league/sleeper/playerCrosswalkClock";
 import type { TeamRosterPlayer } from "@/components/leagues/TeamRosterCard";
 
 interface RosterSnapshotPlayer {
@@ -21,12 +20,10 @@ export interface TeamRosterView {
 export async function getTeamRosterView({
   prisma,
   teamId,
-  clock,
   fetchImpl,
 }: {
   prisma: Pick<PrismaClient, "team" | "roster" | "player">;
   teamId: string;
-  clock: PlayerCrosswalkClock;
   fetchImpl?: (url: string) => Promise<Response>;
 }): Promise<TeamRosterView | null> {
   const team = await prisma.team.findUnique({ where: { id: teamId } });
@@ -36,7 +33,7 @@ export async function getTeamRosterView({
   const rosterPlayers = (roster?.players as unknown as RosterSnapshotPlayer[] | undefined) ?? [];
   const canonicalPlayerIds = rosterPlayers.map((rosterPlayer) => rosterPlayer.canonicalPlayerId);
 
-  await ensurePlayersResolvable({ clock, prisma, canonicalPlayerIds, fetchImpl });
+  await ensurePlayersResolvable({ prisma, canonicalPlayerIds, fetchImpl });
 
   const players = await prisma.player.findMany({ where: { canonicalId: { in: canonicalPlayerIds } } });
   const playerByCanonicalId = new Map(players.map((player) => [player.canonicalId, player]));

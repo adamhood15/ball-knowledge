@@ -1,3 +1,8 @@
+import { PlayerHeadshot } from "@/components/leagues/PlayerHeadshot";
+import { getDummyByeWeek, getDummyValueScore } from "@/lib/design/dummyPlayerStats";
+import { getValueScoreColorClasses } from "@/lib/design/valueScoreColors";
+import { playerImageUrl } from "@/lib/providers/league/sleeper/playerImageUrl";
+
 export interface TeamRosterPlayer {
   canonicalPlayerId: string;
   name: string | null;
@@ -7,40 +12,52 @@ export interface TeamRosterPlayer {
   rosterSlot: string | null;
 }
 
-export function TeamRosterCard({ teamName, players }: { teamName: string; players: TeamRosterPlayer[] }) {
+function PlayerRow({ player, slotLabel }: { player: TeamRosterPlayer; slotLabel: string }) {
+  const displayName = player.name ?? `Unknown player (${player.canonicalPlayerId})`;
+  const byeWeek = getDummyByeWeek(player.canonicalPlayerId);
+  const valueScore = getDummyValueScore(player.canonicalPlayerId);
+  const valueScoreColors = getValueScoreColorClasses(valueScore);
+
+  return (
+    <div data-testid="roster-player-row" className="flex items-center gap-3 border-b border-card-border/10 py-2 last:border-b-0">
+      <PlayerHeadshot src={playerImageUrl(player)} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate text-sm text-body-text" data-testid="roster-player-name">
+          {displayName}
+        </span>
+        <span className="truncate text-xs text-muted-text">
+          {slotLabel}
+          {player.nflTeam ? ` · ${player.nflTeam}` : ""}
+          {` · Bye ${byeWeek}`}
+        </span>
+      </div>
+      <span
+        data-testid="player-value-score"
+        className={`flex-shrink-0 rounded px-2 py-1 text-xs font-semibold ${valueScoreColors.background} ${valueScoreColors.text}`}
+      >
+        {valueScore}
+      </span>
+    </div>
+  );
+}
+
+export function TeamRosterCard({ players }: { players: TeamRosterPlayer[] }) {
   const starters = players.filter((player) => player.rosterSlot !== null);
   const bench = players.filter((player) => player.rosterSlot === null);
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-card-border/30 bg-background p-4">
-      <h3 className="font-display text-lg text-body-text">{teamName}</h3>
-      <table className="w-full text-sm text-body-text">
-        <tbody>
-          {starters.map((player) => (
-            <tr key={player.canonicalPlayerId}>
-              <td className="w-16 py-1 text-muted-text">{player.rosterSlot}</td>
-              <td className="py-1" data-testid="roster-player-name">
-                {player.name ?? `Unknown player (${player.canonicalPlayerId})`}
-              </td>
-            </tr>
-          ))}
-          {bench.length > 0 ? (
-            <tr>
-              <td colSpan={2} className="pt-3 pb-1 text-xs uppercase tracking-wide text-muted-text">
-                Bench
-              </td>
-            </tr>
-          ) : null}
-          {bench.map((player) => (
-            <tr key={player.canonicalPlayerId}>
-              <td className="w-16 py-1 text-muted-text">{player.position ?? "?"}</td>
-              <td className="py-1" data-testid="roster-player-name">
-                {player.name ?? `Unknown player (${player.canonicalPlayerId})`}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div data-testid="roster-card" className="flex flex-col gap-1 bg-background p-4">
+      {starters.map((player) => (
+        <PlayerRow key={player.canonicalPlayerId} player={player} slotLabel={player.rosterSlot!} />
+      ))}
+      {bench.length > 0 ? (
+        <div data-testid="bench-separator" className="pt-3 pb-1 text-xs uppercase tracking-wide text-muted-text">
+          Bench
+        </div>
+      ) : null}
+      {bench.map((player) => (
+        <PlayerRow key={player.canonicalPlayerId} player={player} slotLabel={player.position ?? "?"} />
+      ))}
     </div>
   );
 }
