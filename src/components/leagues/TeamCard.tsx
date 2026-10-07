@@ -14,10 +14,12 @@ export function TeamCard({
   return (
     <div
       className={[
-        "flex items-center gap-3 rounded-lg border transition-all duration-150",
+        "flex items-center gap-3 rounded-none border-2 bg-background transition-all duration-150",
         isGrid ? "aspect-square w-full flex-col justify-center p-4 text-center" : "w-full px-3 py-2",
-        isSelected ? "border-card-border shadow-[0_0_16px_var(--color-card-border)]" : "border-card-border/30",
-        "hover:border-card-border hover:shadow-[0_0_16px_var(--color-card-border)]",
+        isSelected
+          ? "border-card-border shadow-[3px_3px_0_0_var(--color-card-border)]"
+          : "border-muted-text/30 shadow-[2px_2px_0_0_var(--color-neutral-shadow)]",
+        "hover:border-card-border hover:shadow-[3px_3px_0_0_var(--color-card-border)]",
       ].join(" ")}
     >
       {avatarUrl ? (
@@ -37,7 +39,7 @@ export function TeamCard({
           }
         />
       )}
-      <span className={isGrid ? "font-display text-sm text-body-text" : "text-sm text-body-text"}>{teamName}</span>
+      <span className="font-display text-sm text-body-text">{teamName}</span>
     </div>
   );
 }

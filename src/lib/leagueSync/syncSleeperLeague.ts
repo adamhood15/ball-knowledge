@@ -7,11 +7,15 @@ export async function syncSleeperLeague({
   prisma,
   externalLeagueId,
   syncingUserId,
+  autoClaimExternalUserId,
 }: {
   leagueProvider: LeagueProvider;
   prisma: PrismaClient;
   externalLeagueId: string;
   syncingUserId: string;
+  /** When given, the team whose Sleeper owner matches this id is claimed for syncingUserId
+   * directly, skipping the manual "Select Your Team" step. */
+  autoClaimExternalUserId?: string;
 }): Promise<{ leagueId: string }> {
   const leagueInfo = await leagueProvider.getLeagueInfo(externalLeagueId);
   const [rosters, members] = await Promise.all([
@@ -43,20 +47,36 @@ export async function syncSleeperLeague({
 
   for (const roster of rosters) {
     const member = roster.ownerExternalUserId ? memberByExternalUserId.get(roster.ownerExternalUserId) : undefined;
+    const ownerId =
+      autoClaimExternalUserId && roster.ownerExternalUserId === autoClaimExternalUserId ? syncingUserId : undefined;
 
     const team = await prisma.team.upsert({
       where: { leagueId_externalTeamId: { leagueId: league.id, externalTeamId: roster.externalTeamId } },
       create: {
         leagueId: league.id,
         externalTeamId: roster.externalTeamId,
+        ownerId,
         platformDisplayName: member?.displayName ?? null,
         platformTeamName: member?.teamName ?? null,
         platformAvatarUrl: member?.avatarUrl ?? null,
+        wins: roster.record.wins,
+        losses: roster.record.losses,
+        ties: roster.record.ties,
+        pointsFor: roster.record.pointsFor,
+        pointsAgainst: roster.record.pointsAgainst,
+        waiverPosition: roster.record.waiverPosition,
       },
       update: {
+        ...(ownerId ? { ownerId } : {}),
         platformDisplayName: member?.displayName ?? null,
         platformTeamName: member?.teamName ?? null,
         platformAvatarUrl: member?.avatarUrl ?? null,
+        wins: roster.record.wins,
+        losses: roster.record.losses,
+        ties: roster.record.ties,
+        pointsFor: roster.record.pointsFor,
+        pointsAgainst: roster.record.pointsAgainst,
+        waiverPosition: roster.record.waiverPosition,
       },
     });
 

@@ -66,7 +66,13 @@ AGENTS.md                 — this file
 
 ## 5. Design system quick reference
 
-Full direction is in `roadmap.md` section 3. Quick reference for implementation:
+Full direction is in `roadmap.md` section 3. **The authoritative, up-to-date
+reference for shape, shadow, and color-state rules is `design.md`** at the repo
+root — read it before styling any new component. It supersedes the "glow"
+guidance below: the app moved from soft glow shadows to hard, non-blurred
+offset shadows with per-state color rules (rest/hover/focus/selected), and
+`design.md` documents exactly which color means what. Quick reference for the
+rest of the palette:
 
 **Governing rule:** retro skin, modern UX. Visual language is arcade/VHS/synthwave; interaction patterns, accessibility, and responsiveness stay fully modern. When the two conflict, usability wins.
 
@@ -82,7 +88,7 @@ Full direction is in `roadmap.md` section 3. Quick reference for implementation:
 | Muted text | `#a99fd1` | `#5c4f80` |
 
 - Fonts: Orbitron (display numbers, headers — used sparingly), VT323 (small arcade-flavored accent labels), a clean modern sans for all body text and data-dense UI. Never put stat tables, rosters, or rationale text in a display or arcade-mono face.
-- Retro effects (glow, the grid motif, scanlines) are reserved for a handful of moments: the trade grade reveal, the app header, confirmation moments. Rosters, scoring tables, and the trade builder stay in a plain, high-contrast treatment carrying the same color/type language.
+- Shape/shadow language: 90° corners everywhere, hard non-blurred offset shadows (never `blur`/glow), shadow color encodes interaction state. See `design.md` for the full state-rules table before writing any new className.
 - Validate WCAG AA contrast on both modes before finalizing any color that deviates from the table above.
 - Build and test the grade reveal card at mobile width (375px) before tuning effect intensity further — this is a PWA, mobile is not an afterthought.
 
@@ -112,6 +118,7 @@ Ask rather than guess when:
 - A requirement in one phase seems to conflict with something already built in an earlier phase.
 - A platform integration (Sleeper, ESPN) behaves differently than `roadmap.md` section 7 describes.
 - A decision would be expensive to reverse later (schema design that's hard to migrate, a third-party dependency commitment).
+- **A feature's user flow isn't fully mapped out.** If `roadmap.md` names a step or screen but doesn't pin down the exact sequence, what's asked at each step, or how a step's choices affect what's stored (e.g. what a "platform" selector in a multi-step flow actually maps to in the data model) — stop and ask for the flow before building screens/ordering around a guess, rather than picking a reasonable-sounding interpretation and moving on.
 
 Don't ask, just proceed with a reasonable default, when:
 - It's a naming, file-organization, or implementation-detail choice not specified in the roadmap.

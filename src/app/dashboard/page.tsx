@@ -2,9 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { DashboardLeagueCard } from "@/components/dashboard/DashboardLeagueCard";
 import { EmptyDashboardState } from "@/components/dashboard/EmptyDashboardState";
 import { SyncLeagueForm } from "@/components/dashboard/SyncLeagueForm";
-import { LeagueModeBadge } from "@/components/leagues/LeagueModeBadge";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -25,18 +25,23 @@ export default async function DashboardPage() {
         <ul className="mx-auto flex w-full max-w-lg flex-col gap-3">
           {leaguesOwnedByUser.map((league) => (
             <li key={league.id}>
-              <Link
-                href={`/leagues/${league.id}`}
-                className="flex items-center gap-3 rounded-lg border border-card-border/30 bg-background p-4 text-body-text hover:border-card-border/60"
-              >
-                <span>{league.name}</span>
-                <LeagueModeBadge mode={league.mode} />
-              </Link>
+              <DashboardLeagueCard
+                leagueId={league.id}
+                name={league.name}
+                platform={league.platform}
+                mode={league.mode}
+              />
             </li>
           ))}
         </ul>
       )}
       <SyncLeagueForm />
+      <Link
+        href="/leagues/new"
+        className="mx-auto text-sm text-secondary-accent hover:underline"
+      >
+        + Create a Custom League
+      </Link>
     </div>
   );
 }

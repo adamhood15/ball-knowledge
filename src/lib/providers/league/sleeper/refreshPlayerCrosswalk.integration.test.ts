@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import playersSubsetFixture from "./__fixtures__/players-subset.json";
 import {
   refreshSleeperPlayerCrosswalkIfStale,
@@ -6,6 +6,7 @@ import {
 } from "@/lib/providers/league/sleeper/refreshPlayerCrosswalk";
 import type { PlayerCrosswalkClock } from "@/lib/providers/league/sleeper/playerCrosswalkClock";
 import { prisma } from "@/lib/prisma";
+import type { Player, Prisma } from "@/generated/prisma/client";
 
 function alwaysStaleClock(): PlayerCrosswalkClock {
   return {
@@ -24,11 +25,34 @@ function fixtureFetch() {
   })) as unknown as typeof fetch;
 }
 
+/**
+ * This fixture reuses real Sleeper player IDs for realism, which can collide with rows the
+ * routine crosswalk sync has already populated in the shared dev database (e.g. a real player
+ * happens to share an ID with a fixture entry). A blanket `deleteMany` on those IDs would
+ * permanently destroy that real data every time this suite runs — snapshot before, restore
+ * after, so cleanup only ever reverts what the test itself changed.
+ */
+async function snapshotPlayers(canonicalIds: string[]): Promise<Player[]> {
+  return prisma.player.findMany({ where: { canonicalId: { in: canonicalIds } } });
+}
+
+async function restorePlayers(canonicalIds: string[], snapshot: Player[]): Promise<void> {
+  await prisma.player.deleteMany({ where: { canonicalId: { in: canonicalIds } } });
+  if (snapshot.length > 0) {
+    await prisma.player.createMany({ data: snapshot as unknown as Prisma.PlayerCreateManyInput[] });
+  }
+}
+
 describe("refreshSleeperPlayerCrosswalkIfStale (Prisma integration)", () => {
   const seededCanonicalIds = Object.keys(playersSubsetFixture);
+  let preExistingPlayers: Player[] = [];
+
+  beforeAll(async () => {
+    preExistingPlayers = await snapshotPlayers(seededCanonicalIds);
+  });
 
   afterAll(async () => {
-    await prisma.player.deleteMany({ where: { canonicalId: { in: seededCanonicalIds } } });
+    await restorePlayers(seededCanonicalIds, preExistingPlayers);
     await prisma.$disconnect();
   });
 
@@ -73,15 +97,28 @@ describe("refreshSleeperPlayerCrosswalkIfStale (Prisma integration)", () => {
 
 describe("refreshCrosswalkForMissingPlayers (Prisma integration)", () => {
   const targetCanonicalId = Object.keys(playersSubsetFixture)[0]!;
+  let preExistingPlayers: Player[] = [];
+
+  beforeAll(async () => {
+    preExistingPlayers = await snapshotPlayers([targetCanonicalId]);
+  });
 
   afterAll(async () => {
-    await prisma.player.deleteMany({ where: { canonicalId: targetCanonicalId } });
+    await restorePlayers([targetCanonicalId], preExistingPlayers);
     await prisma.$disconnect();
   });
 
   it(
     "upserts only the requested player out of the whole fetched list",
     async () => {
+      // The other fixture ID may or may not already exist for real (fixture IDs are real
+      // Sleeper IDs, and the shared dev database's routine crosswalk sync could easily have
+      // a real player at that ID) — the invariant this call must satisfy is "didn't touch it
+      // either way," not "it doesn't exist," so snapshot before and compare after rather than
+      // asserting non-existence.
+      const otherFixtureCanonicalId = Object.keys(playersSubsetFixture)[1]!;
+      const otherPlayerBefore = await prisma.player.findUnique({ where: { canonicalId: otherFixtureCanonicalId } });
+
       const result = await refreshCrosswalkForMissingPlayers({
         prisma,
         canonicalPlayerIds: [targetCanonicalId],
@@ -92,9 +129,8 @@ describe("refreshCrosswalkForMissingPlayers (Prisma integration)", () => {
       const player = await prisma.player.findUniqueOrThrow({ where: { canonicalId: targetCanonicalId } });
       expect(player.canonicalId).toBe(targetCanonicalId);
 
-      const otherFixtureCanonicalId = Object.keys(playersSubsetFixture)[1]!;
-      const otherPlayer = await prisma.player.findUnique({ where: { canonicalId: otherFixtureCanonicalId } });
-      expect(otherPlayer).toBeNull();
+      const otherPlayerAfter = await prisma.player.findUnique({ where: { canonicalId: otherFixtureCanonicalId } });
+      expect(otherPlayerAfter).toEqual(otherPlayerBefore);
     },
     20000,
   );

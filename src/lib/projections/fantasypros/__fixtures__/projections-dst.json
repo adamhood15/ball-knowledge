@@ -1,0 +1,24 @@
+{
+  "season": "2026",
+  "week": "0",
+  "count": "1",
+  "positions": "DST",
+  "scoring": "STD",
+  "players": [
+    {
+      "fpid": 90501,
+      "mflid": 80501,
+      "name": "Test City Defense",
+      "position_id": "DST",
+      "team_id": "HOU",
+      "filename": "test-city-defense.php",
+      "stats": {
+        "points": 120.54,
+        "points_ppr": 120.54,
+        "points_half": 120.54,
+        "def_sack": 48.85,
+        "def_int": 14.2
+      }
+    }
+  ]
+}

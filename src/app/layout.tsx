@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Orbitron, Space_Grotesk, VT323 } from "next/font/google";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration";
 import "./globals.css";
 
@@ -39,7 +40,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans">
         <ServiceWorkerRegistration />
         <AppHeader />
-        <main className="flex flex-1 flex-col">{children}</main>
+        {/* pb-20 keeps page content (and its primary actions) clear of the sticky bottom nav below. */}
+        <main className="flex flex-1 flex-col pb-20">{children}</main>
+        <BottomNav />
       </body>
     </html>
   );

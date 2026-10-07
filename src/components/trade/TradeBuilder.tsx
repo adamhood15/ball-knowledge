@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { PlayerSelectCard } from "@/components/trade/PlayerSelectCard";
+import { CloseIcon } from "@/components/icons/CloseIcon";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 
 export interface TradeablePlayer {
   canonicalPlayerId: string;
@@ -88,7 +90,7 @@ export function TradeBuilder({
       {totalSelectedCount > 0 ? (
         <div
           className={[
-            "fixed inset-x-0 bottom-0 border-t border-card-border/30 bg-background transition-all duration-200",
+            "fixed inset-x-0 bottom-0 border-t-2 border-muted-text/30 bg-background transition-all duration-200",
             isProposalExpanded ? "top-16" : "",
           ].join(" ")}
         >
@@ -96,13 +98,9 @@ export function TradeBuilder({
             <div data-testid="trade-proposal-panel" className="flex h-full flex-col gap-6 overflow-y-auto p-6">
               <div className="mx-auto flex w-full max-w-4xl items-center justify-between">
                 <h2 className="font-display text-xl text-body-text">Trade Proposal</h2>
-                <button
-                  type="button"
-                  onClick={() => setIsProposalExpanded(false)}
-                  className="text-sm text-muted-text hover:text-body-text"
-                >
-                  Close
-                </button>
+                <IconButton aria-label="Close" onClick={() => setIsProposalExpanded(false)}>
+                  <CloseIcon className="h-3.5 w-3.5" />
+                </IconButton>
               </div>
               <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-8 md:grid-cols-2">
                 <div className="flex flex-col gap-2">

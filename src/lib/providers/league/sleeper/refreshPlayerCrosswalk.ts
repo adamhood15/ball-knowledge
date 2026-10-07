@@ -1,4 +1,6 @@
 import type { PrismaClient } from "@/generated/prisma/client";
+import { isFantasyRelevantPosition } from "@/lib/leagueSettings/fantasyPositions";
+import { getTeamByeWeek } from "@/lib/nfl/teamByeWeeks";
 import { isPlayerCrosswalkStale, type PlayerCrosswalkClock } from "@/lib/providers/league/sleeper/playerCrosswalkClock";
 import { normalizePlayerName } from "@/lib/trade/normalizePlayerName";
 
@@ -12,6 +14,7 @@ interface SleeperPlayerResponse {
   last_name?: string;
   position?: string | null;
   team?: string | null;
+  active?: boolean;
 }
 
 type FetchImpl = (url: string) => Promise<Response>;
@@ -27,7 +30,7 @@ async function fetchFantasyRelevantSleeperPlayers(fetchImpl: FetchImpl): Promise
     throw new Error(`Sleeper player list request failed with status ${response.status}`);
   }
   const playersById: Record<string, SleeperPlayerResponse> = await response.json();
-  return Object.values(playersById).filter((player) => player.position);
+  return Object.values(playersById).filter((player) => isFantasyRelevantPosition(player.position ?? null));
 }
 
 async function upsertPlayers(
@@ -39,6 +42,7 @@ async function upsertPlayers(
     await Promise.all(
       batch.map((player) => {
         const displayName = playerDisplayName(player);
+        const byeWeek = getTeamByeWeek(player.team ?? null);
         return prisma.player.upsert({
           where: { canonicalId: player.player_id },
           create: {
@@ -47,6 +51,8 @@ async function upsertPlayers(
             normalizedName: normalizePlayerName(displayName),
             position: player.position!,
             nflTeam: player.team ?? null,
+            byeWeek,
+            active: player.active ?? true,
             platformIdCrosswalk: { sleeper: player.player_id },
           },
           update: {
@@ -54,6 +60,8 @@ async function upsertPlayers(
             normalizedName: normalizePlayerName(displayName),
             position: player.position!,
             nflTeam: player.team ?? null,
+            byeWeek,
+            active: player.active ?? true,
             platformIdCrosswalk: { sleeper: player.player_id },
           },
         });

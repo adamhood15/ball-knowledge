@@ -22,7 +22,15 @@ export default async function LeagueLayout({
   }
 
   const league = await prisma.league.findUnique({ where: { id: leagueId } });
-  if (!league || league.createdByUserId !== session.user.id) {
+  if (!league) {
+    notFound();
+  }
+
+  const isCommissioner = league.createdByUserId === session.user.id;
+  const ownsATeamInLeague = isCommissioner
+    ? true
+    : Boolean(await prisma.team.findFirst({ where: { leagueId, ownerId: session.user.id } }));
+  if (!isCommissioner && !ownsATeamInLeague) {
     notFound();
   }
 

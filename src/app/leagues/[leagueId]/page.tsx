@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { attachProjectedValuesToRoster } from "@/lib/leagueSync/attachProjectedValuesToRoster";
 import { getTeamRosterView } from "@/lib/leagueSync/getTeamRosterView";
 import { TeamRosterCard } from "@/components/leagues/TeamRosterCard";
 import { TeamCard } from "@/components/leagues/TeamCard";
@@ -38,6 +39,7 @@ export default async function MyTeamPage({ params }: { params: Promise<{ leagueI
   }
 
   const rosterView = await getTeamRosterView({ prisma, teamId: myTeam.id });
+  const players = await attachProjectedValuesToRoster({ leagueId, prisma, players: rosterView!.players });
 
   return (
     <div className="flex flex-1 flex-col gap-6 px-4 py-10">
@@ -45,7 +47,7 @@ export default async function MyTeamPage({ params }: { params: Promise<{ leagueI
         <TeamCard teamName={rosterView!.teamName} avatarUrl={rosterView!.avatarUrl} variant="row" isSelected />
       </div>
       <div className="mx-auto w-full max-w-md">
-        <TeamRosterCard players={rosterView!.players} />
+        <TeamRosterCard players={players} />
       </div>
     </div>
   );

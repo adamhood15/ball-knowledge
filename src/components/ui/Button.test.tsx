@@ -14,16 +14,26 @@ describe("Button", () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it("applies primary variant styling by default", () => {
+  it("applies primary variant styling by default: orange fill with a hard gold shadow", () => {
     render(<Button>Primary</Button>);
-    expect(screen.getByRole("button")).toHaveClass("bg-card-border");
+    const button = screen.getByRole("button");
+    expect(button).toHaveClass("bg-orange-accent");
+    expect(button).toHaveClass("shadow-[4px_4px_0_0_var(--color-gold-accent)]");
   });
 
-  it("applies secondary (outline) variant styling when requested", () => {
+  it("applies secondary (outline) variant styling when requested: outline with a hard cyan shadow", () => {
     render(<Button variant="secondary">Secondary</Button>);
     const button = screen.getByRole("button");
-    expect(button).not.toHaveClass("bg-card-border");
-    expect(button).toHaveClass("border-card-border/60");
+    expect(button).not.toHaveClass("bg-orange-accent");
+    expect(button).toHaveClass("border-secondary-accent");
+    expect(button).toHaveClass("shadow-[4px_4px_0_0_var(--color-secondary-accent)]");
+  });
+
+  it("has hard, square corners rather than rounded ones", () => {
+    render(<Button>Square</Button>);
+    const button = screen.getByRole("button");
+    expect(button).toHaveClass("rounded-none");
+    expect(button).not.toHaveClass("rounded-md");
   });
 
   it("is disabled and unclickable when disabled", async () => {

@@ -5,8 +5,11 @@
   --color-background: #0c0620;
   --color-card-border: #ff2fb0;
   --color-secondary-accent: #00fff0;
+  --color-gold-accent: #ffe98a;
+  --color-orange-accent: #ff7a29;
   --color-body-text: #e6e1f5;
   --color-muted-text: #a99fd1;
+  --color-neutral-shadow: #362a5c;
 }
 
 @media (prefers-color-scheme: light) {
@@ -14,8 +17,11 @@
     --color-background: #f5f1ff;
     --color-card-border: #d6157e;
     --color-secondary-accent: #067a72;
+    --color-gold-accent: #b8860b;
+    --color-orange-accent: #b5480a;
     --color-body-text: #1a1030;
     --color-muted-text: #5c4f80;
+    --color-neutral-shadow: #cabfe3;
   }
 }
 
@@ -23,8 +29,11 @@
   --color-background: var(--color-background);
   --color-card-border: var(--color-card-border);
   --color-secondary-accent: var(--color-secondary-accent);
+  --color-gold-accent: var(--color-gold-accent);
+  --color-orange-accent: var(--color-orange-accent);
   --color-body-text: var(--color-body-text);
   --color-muted-text: var(--color-muted-text);
+  --color-neutral-shadow: var(--color-neutral-shadow);
   --font-display: var(--font-orbitron);
   --font-accent: var(--font-vt323);
   --font-sans: var(--font-space-grotesk);

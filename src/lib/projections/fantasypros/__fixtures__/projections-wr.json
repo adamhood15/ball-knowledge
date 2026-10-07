@@ -1,0 +1,33 @@
+{
+  "season": "2026",
+  "week": "0",
+  "count": "1",
+  "positions": "WR",
+  "scoring": "STD",
+  "players": [
+    {
+      "fpid": 90201,
+      "mflid": 80201,
+      "name": "Test Wide Receiver One",
+      "position_id": "WR",
+      "team_id": "LAR",
+      "filename": "test-wide-receiver-one-wr.php",
+      "stats": {
+        "points": 222.8,
+        "points_ppr": 339.8,
+        "points_half": 281.3,
+        "rush_att": 0,
+        "rush_yds": 0,
+        "rush_tds": 0,
+        "rec_rec": 117,
+        "rec_yds": 1539,
+        "rec_tds": 9,
+        "rec_yds_100": 0,
+        "rec_yds_200": 0,
+        "fumbles": 0.6,
+        "ret_tds": 0,
+        "2pt_tds": 0
+      }
+    }
+  ]
+}
