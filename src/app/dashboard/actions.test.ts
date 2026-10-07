@@ -149,4 +149,25 @@ describe("syncSelectedSleeperLeaguesAction", () => {
     expect(refreshCrosswalkMock).toHaveBeenCalledTimes(1);
     expect(redirectMock).toHaveBeenCalledWith("/dashboard");
   });
+
+  // Regression test: a league sync must never look broken because of this background job.
+  // The crosswalk refresh (e.g. its Upstash Redis staleness check) can fail independently of
+  // the sync it rides along with — that must log, not reject, since after() runs post-response
+  // and an unhandled rejection here says nothing useful about whether the sync itself worked.
+  it("logs and swallows a background crosswalk refresh failure instead of letting it reject", async () => {
+    authMock.mockResolvedValue({ user: { id: "user-1" } });
+    syncSleeperLeagueMock.mockResolvedValue({ leagueId: "league-abc" });
+    refreshCrosswalkMock.mockReset().mockRejectedValue(new Error("getaddrinfo ENOTFOUND clean-skunk-40809.upstash.io"));
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await syncSelectedSleeperLeaguesAction("12345", ["111"]);
+
+    await expect(afterMock.mock.calls[0]![0]()).resolves.toBeUndefined();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("player crosswalk refresh"),
+      expect.any(Error),
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
 });
