@@ -8,6 +8,7 @@ const refreshCrosswalkMock = vi.hoisted(() => vi.fn());
 const resolveSleeperUsernameMock = vi.hoisted(() => vi.fn());
 const getCurrentNflSeasonMock = vi.hoisted(() => vi.fn());
 const getSleeperUserLeaguesMock = vi.hoisted(() => vi.fn());
+const linkPlatformAccountOrDetectConflictMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/auth", () => ({ auth: authMock }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
@@ -27,6 +28,9 @@ vi.mock("@/lib/providers/league/sleeper/sleeperUserLookup", () => ({
   getCurrentNflSeason: getCurrentNflSeasonMock,
   getSleeperUserLeagues: getSleeperUserLeaguesMock,
 }));
+vi.mock("@/lib/auth/linkedCredentials", () => ({
+  linkPlatformAccountOrDetectConflict: linkPlatformAccountOrDetectConflictMock,
+}));
 vi.mock("@/lib/prisma", () => ({ prisma: {} }));
 
 const { lookupSleeperLeaguesAction, syncSelectedSleeperLeaguesAction } = await import("@/app/dashboard/actions");
@@ -44,6 +48,7 @@ describe("lookupSleeperLeaguesAction", () => {
     resolveSleeperUsernameMock.mockReset();
     getCurrentNflSeasonMock.mockReset();
     getSleeperUserLeaguesMock.mockReset();
+    linkPlatformAccountOrDetectConflictMock.mockReset().mockResolvedValue({ status: "linked" });
   });
 
   it("redirects to sign-in when there is no signed-in user", async () => {
@@ -102,6 +107,32 @@ describe("lookupSleeperLeaguesAction", () => {
     const result = await lookupSleeperLeaguesAction({ error: null, result: null }, formDataWith("mahomes15"));
 
     expect(result.error).toMatch(/couldn't look up/i);
+  });
+
+  // Regression coverage for: "a Sleeper username should only ever be linked to one account."
+  it("claims the resolved Sleeper identity for the signed-in account on first lookup", async () => {
+    authMock.mockResolvedValue({ user: { id: "user-1" } });
+    resolveSleeperUsernameMock.mockResolvedValue({ externalUserId: "12345", displayName: "Mahomes15" });
+    getCurrentNflSeasonMock.mockResolvedValue("2026");
+    getSleeperUserLeaguesMock.mockResolvedValue([]);
+
+    await lookupSleeperLeaguesAction({ error: null, result: null }, formDataWith("mahomes15"));
+
+    expect(linkPlatformAccountOrDetectConflictMock).toHaveBeenCalledWith(
+      expect.objectContaining({ platform: "SLEEPER", externalId: "12345", userId: "user-1" }),
+    );
+  });
+
+  it("returns a friendly error, and never looks up leagues, when the Sleeper username is already linked to a different account", async () => {
+    authMock.mockResolvedValue({ user: { id: "user-1" } });
+    resolveSleeperUsernameMock.mockResolvedValue({ externalUserId: "12345", displayName: "Mahomes15" });
+    linkPlatformAccountOrDetectConflictMock.mockResolvedValue({ status: "conflict", linkedToUserId: "someone-else" });
+
+    const result = await lookupSleeperLeaguesAction({ error: null, result: null }, formDataWith("mahomes15"));
+
+    expect(result.error).toMatch(/already linked/i);
+    expect(result.result).toBeNull();
+    expect(getSleeperUserLeaguesMock).not.toHaveBeenCalled();
   });
 });
 

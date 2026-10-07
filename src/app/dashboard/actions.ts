@@ -13,6 +13,7 @@ import {
   getSleeperUserLeagues,
   resolveSleeperUsername,
 } from "@/lib/providers/league/sleeper/sleeperUserLookup";
+import { linkPlatformAccountOrDetectConflict } from "@/lib/auth/linkedCredentials";
 
 export interface LookupSleeperLeaguesState {
   error: string | null;
@@ -42,6 +43,22 @@ export async function lookupSleeperLeaguesAction(
     const resolvedUser = await resolveSleeperUsername({ username });
     if (!resolvedUser) {
       return { error: "Couldn't find that Sleeper username. Double-check the spelling and try again.", result: null };
+    }
+
+    // A Sleeper username may only ever be linked to one Ball Knowledge account — claim it for
+    // this account on first lookup, or refuse if a different account already holds it, so two
+    // accounts can never both end up tied to the same Sleeper identity.
+    const linkOutcome = await linkPlatformAccountOrDetectConflict({
+      prisma,
+      platform: "SLEEPER",
+      externalId: resolvedUser.externalUserId,
+      userId: session.user.id,
+    });
+    if (linkOutcome.status === "conflict") {
+      return {
+        error: "This Sleeper username is already linked to a different Ball Knowledge account.",
+        result: null,
+      };
     }
 
     const season = await getCurrentNflSeason();
