@@ -132,6 +132,21 @@ describe("TeamRosterCard", () => {
     expect(badges[1]).toHaveTextContent("IR");
   });
 
+  it("renders Out and IR badges as solid red and Questionable and Doubtful badges as solid yellow", () => {
+    render(
+      <TeamRosterCard
+        players={[
+          player({ canonicalPlayerId: "100", injuryStatus: "Out" }),
+          player({ canonicalPlayerId: "101", injuryStatus: "Questionable" }),
+        ]}
+      />,
+    );
+
+    const [outBadge, questionableBadge] = screen.getAllByTestId("player-injury-status");
+    expect(outBadge).toHaveClass("bg-red-600");
+    expect(questionableBadge).toHaveClass("bg-yellow-400");
+  });
+
   it("shows no injury badge for a healthy player", () => {
     render(<TeamRosterCard players={[player({ canonicalPlayerId: "100", injuryStatus: null })]} />);
 

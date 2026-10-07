@@ -3,6 +3,7 @@ import { getDummyValueScore } from "@/lib/design/dummyPlayerStats";
 import { getPositionColorClasses } from "@/lib/design/positionColors";
 import { getValueScoreColorClasses } from "@/lib/design/valueScoreColors";
 import { injuryStatusBadgeLabel } from "@/lib/injuries/injuryStatusBadgeLabel";
+import { injuryStatusBadgeClasses } from "@/lib/injuries/injuryStatusBadgeStyle";
 import { playerImageUrl } from "@/lib/providers/league/sleeper/playerImageUrl";
 
 export interface TeamRosterPlayer {
@@ -48,7 +49,7 @@ function PlayerRow({ player, slotLabel }: { player: TeamRosterPlayer; slotLabel:
           {injuryBadgeLabel ? (
             <span
               data-testid="player-injury-status"
-              className="flex-shrink-0 rounded-none border border-muted-text/30 px-1 text-[10px] font-semibold tracking-wide text-body-text shadow-[2px_2px_0_0_var(--color-neutral-shadow)]"
+              className={`flex-shrink-0 rounded-none border px-1 text-[10px] font-semibold tracking-wide shadow-[2px_2px_0_0_var(--color-neutral-shadow)] ${injuryStatusBadgeClasses(player.injuryStatus)}`}
             >
               {injuryBadgeLabel}
             </span>
