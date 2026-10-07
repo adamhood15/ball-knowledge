@@ -75,10 +75,11 @@ model User {
   emailVerified DateTime?
   image         String?
 
-  accounts       Account[]
-  sessions       Session[]
-  leaguesCreated League[]  @relation("LeagueCommissioner")
-  teamsOwned     Team[]
+  accounts         Account[]
+  sessions         Session[]
+  leaguesCreated   League[]           @relation("LeagueCommissioner")
+  teamsOwned       Team[]
+  linkedCredentials LinkedCredential[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -104,6 +105,27 @@ model League {
   updatedAt DateTime @updatedAt
 
   @@unique([platform, externalLeagueId])
+}
+
+// Ties one external platform identity (e.g. a Sleeper user id) to exactly one Ball Knowledge
+// account. A given (platform, externalId) can only ever be claimed by one User — enforced by
+// the unique constraint below, not just application logic — so two app accounts can never both
+// claim the same Sleeper username. Also the eventual home for ESPN's encrypted SWID/espn_s2
+// cookies (roadmap.md Phase 10), hence `encryptedCookie` already shaped for that even though
+// nothing writes it yet.
+model LinkedCredential {
+  id              String         @id @default(cuid())
+  userId          String
+  platform        LeaguePlatform
+  externalId      String
+  encryptedCookie String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([platform, externalId])
+  @@index([userId])
 }
 
 model Team {
