@@ -82,10 +82,15 @@ export async function syncSelectedSleeperLeaguesAction(
 
   // The full Sleeper player list refresh (thousands of upserts) must not block the redirect —
   // it runs after the response is sent, gated by its own daily-staleness check either way.
+  // Swallow (don't rethrow) a failure here: this is best-effort cache maintenance riding along
+  // with the sync, not the sync itself (e.g. an unreachable Redis instance must never make the
+  // league sync the user just watched succeed look broken).
   after(() =>
     refreshSleeperPlayerCrosswalkIfStale({
       clock: createUpstashPlayerCrosswalkClock(),
       prisma,
+    }).catch((error) => {
+      console.error("Background player crosswalk refresh failed (league sync itself is unaffected):", error);
     }),
   );
 
