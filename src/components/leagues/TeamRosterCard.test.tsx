@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { TeamRosterCard, type TeamRosterPlayer } from "@/components/leagues/TeamRosterCard";
 import { getDummyValueScore } from "@/lib/design/dummyPlayerStats";
+import { getPositionColorClasses } from "@/lib/design/positionColors";
 
 const player = (overrides: Partial<TeamRosterPlayer> & Pick<TeamRosterPlayer, "canonicalPlayerId">): TeamRosterPlayer => ({
   name: "Starter QB",
@@ -36,6 +37,39 @@ describe("TeamRosterCard", () => {
     expect(screen.getByTestId("bench-separator")).toBeInTheDocument();
     expect(rows[2]).toHaveTextContent("RB");
     expect(rows[2]).toHaveTextContent("Bench Guy");
+  });
+
+  it("tints each starter row with its slot's position color, matching the custom league roster rows", () => {
+    render(
+      <TeamRosterCard
+        players={[
+          player({ canonicalPlayerId: "100", position: "QB", rosterSlot: "QB" }),
+          player({ canonicalPlayerId: "101", position: "WR", rosterSlot: "FLEX" }),
+        ]}
+      />,
+    );
+
+    const [qbRow, flexRow] = screen.getAllByTestId("roster-player-row");
+    const qbColors = getPositionColorClasses("QB");
+    const flexColors = getPositionColorClasses("FLEX");
+
+    expect(qbRow).toHaveClass(qbColors.background, qbColors.border);
+    expect(within(qbRow!).getByText("QB")).toHaveClass(qbColors.text);
+    expect(flexRow).toHaveClass(flexColors.background, flexColors.border);
+    expect(within(flexRow!).getByText("FLEX")).toHaveClass(flexColors.text);
+  });
+
+  it("tints bench rows by the player's real position, not a generic color", () => {
+    render(
+      <TeamRosterCard
+        players={[player({ canonicalPlayerId: "102", name: "Bench RB", position: "RB", nflTeam: "SF", rosterSlot: null })]}
+      />,
+    );
+
+    const row = screen.getByTestId("roster-player-row");
+    const colors = getPositionColorClasses("RB");
+    expect(row).toHaveClass(colors.background, colors.border);
+    expect(within(row).getByText("RB")).toHaveClass(colors.text);
   });
 
   it("shows each player's NFL team abbreviation and their real bye week", () => {
