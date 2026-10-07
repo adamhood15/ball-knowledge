@@ -11,6 +11,13 @@ const isDevelopment = process.env.NODE_ENV !== "production";
  * adapter (see auth.ts) so this can run in the Edge middleware runtime.
  */
 export const authConfig = {
+  // Without this, Auth.js only auto-trusts the request's Host header on
+  // platforms it recognizes (Vercel, etc.) or when NODE_ENV=development —
+  // a self-hosted/local production run (`next build && next start`) gets
+  // every auth request rejected as "UntrustedHost" otherwise. Safe here
+  // since we don't rely on the host for anything security-sensitive beyond
+  // building callback URLs. https://errors.authjs.dev#untrustedhost
+  trustHost: true,
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
