@@ -25,22 +25,27 @@ describe("syncSleeperLeague (Prisma integration)", () => {
   const testRunId = `test-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const commissionerEmail = `${testRunId}-commissioner@example.com`;
   const otherUserEmail = `${testRunId}-other@example.com`;
+  const claimingUserEmail = `${testRunId}-claiming@example.com`;
   let commissionerUserId: string;
   let otherUserId: string;
   let syncedLeagueId: string;
 
   beforeAll(async () => {
-    // Defends against a stale row left behind by a prior interrupted run — this fixture's
-    // externalLeagueId is a real league ID, so a leaked row here would silently break the
-    // "commissioner is preserved" assertions below by attaching to someone else's league.
+    // Defends against a stale row left behind by a prior interrupted run. The fixture's
+    // externalLeagueId must stay a synthetic value that can never match a real Sleeper league —
+    // it previously reused a real recorded league's ID, and this same deleteMany silently
+    // deleted that real league (and this test's own afterAll then deleted whatever ended up at
+    // that row) every time the suite ran, against the shared dev database.
     await prisma.league.deleteMany({
       where: { platform: "SLEEPER", externalLeagueId: leagueFixture.league_id },
     });
   });
 
   afterAll(async () => {
+    // League delete cascades to its Teams first, so a Team.ownerId FK to a user created in
+    // one of these tests never blocks that user's own deletion below.
     if (syncedLeagueId) await prisma.league.delete({ where: { id: syncedLeagueId } }).catch(() => {});
-    await prisma.user.deleteMany({ where: { email: { in: [commissionerEmail, otherUserEmail] } } });
+    await prisma.user.deleteMany({ where: { email: { in: [commissionerEmail, otherUserEmail, claimingUserEmail] } } });
     await prisma.$disconnect();
   });
 
@@ -91,6 +96,13 @@ describe("syncSleeperLeague (Prisma integration)", () => {
     expect(firstStarter.rosterSlot).toBe(leagueFixture.roster_positions[0]);
     const benchPlayer = storedPlayers.find((p) => p.rosterSlot === null);
     expect(benchPlayer).toBeDefined();
+
+    expect(firstTeam.wins).toBe(firstFixtureRoster.settings.wins);
+    expect(firstTeam.losses).toBe(firstFixtureRoster.settings.losses);
+    expect(firstTeam.ties).toBe(firstFixtureRoster.settings.ties);
+    expect(firstTeam.pointsFor).toBe(firstFixtureRoster.settings.fpts);
+    expect(firstTeam.pointsAgainst).toBe(0);
+    expect(firstTeam.waiverPosition).toBe(firstFixtureRoster.settings.waiver_position);
   });
 
   it("re-syncing updates league settings and appends a new roster snapshot, without changing the commissioner", async () => {
@@ -115,5 +127,26 @@ describe("syncSleeperLeague (Prisma integration)", () => {
     expect(league.teams).toHaveLength(rostersFixture.length);
     const firstTeam = league.teams.find((team) => team.externalTeamId === String(rostersFixture[0]!.roster_id))!;
     expect(firstTeam.rosters).toHaveLength(2);
+  });
+
+  it("auto-claims the team owned by the given Sleeper external user id, leaving every other team unowned", async () => {
+    const claimingUser = await prisma.user.create({ data: { email: claimingUserEmail } });
+
+    const result = await syncSleeperLeague({
+      leagueProvider: fixtureBackedSleeperProvider(),
+      prisma,
+      externalLeagueId: leagueFixture.league_id,
+      syncingUserId: claimingUser.id,
+      autoClaimExternalUserId: rostersFixture[0]!.owner_id,
+    });
+
+    const teams = await prisma.team.findMany({ where: { leagueId: result.leagueId } });
+    const claimedTeam = teams.find((team) => team.externalTeamId === String(rostersFixture[0]!.roster_id))!;
+    expect(claimedTeam.ownerId).toBe(claimingUser.id);
+
+    const otherTeams = teams.filter((team) => team.id !== claimedTeam.id);
+    for (const team of otherTeams) {
+      expect(team.ownerId).toBeNull();
+    }
   });
 });

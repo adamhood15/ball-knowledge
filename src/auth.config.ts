@@ -35,6 +35,8 @@ export const authConfig = {
   ],
   pages: {
     signIn: "/sign-in",
+    verifyRequest: "/verify-request",
+    error: "/auth-error",
   },
   callbacks: {
     authorized({ auth, request }) {

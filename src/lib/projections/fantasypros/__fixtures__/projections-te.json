@@ -1,0 +1,33 @@
+{
+  "season": "2026",
+  "week": "0",
+  "count": "1",
+  "positions": "TE",
+  "scoring": "STD",
+  "players": [
+    {
+      "fpid": 90301,
+      "mflid": 80301,
+      "name": "Test Tight End One",
+      "position_id": "TE",
+      "team_id": "LV",
+      "filename": "test-tight-end-one-te.php",
+      "stats": {
+        "points": 147.34,
+        "points_ppr": 243.79,
+        "points_half": 195.57,
+        "rush_att": 0,
+        "rush_yds": 0,
+        "rush_tds": 0,
+        "rec_rec": 96.45,
+        "rec_yds": 1025.33,
+        "rec_tds": 6.2,
+        "rec_yds_100": 0,
+        "rec_yds_200": 0,
+        "fumbles": 0.4,
+        "ret_tds": 0,
+        "2pt_tds": 0
+      }
+    }
+  ]
+}

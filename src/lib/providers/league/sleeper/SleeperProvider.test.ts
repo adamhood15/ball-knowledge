@@ -86,6 +86,52 @@ describe("SleeperProvider", () => {
     expect(starterCanonicalIdsInOrder).toEqual([...expectedSlotByPlayerId.keys()]);
   });
 
+  it("getRosters parses each team's win/loss/tie record and points for/against from Sleeper's settings", async () => {
+    const rosterWithRecord = {
+      ...rostersFixture[0]!,
+      settings: {
+        wins: 8,
+        losses: 5,
+        ties: 1,
+        fpts: 1245,
+        fpts_decimal: 67,
+        fpts_against: 1180,
+        fpts_against_decimal: 32,
+        waiver_position: 9,
+      },
+    };
+    const fetchImpl = fakeFetch({ [`/league/${leagueId}/rosters`]: [rosterWithRecord] });
+    const provider = new SleeperProvider(fetchImpl);
+
+    const rosters = await provider.getRosters(leagueId, leagueFixture.roster_positions);
+
+    expect(rosters[0]!.record).toEqual({
+      wins: 8,
+      losses: 5,
+      ties: 1,
+      pointsFor: 1245.67,
+      pointsAgainst: 1180.32,
+      waiverPosition: 9,
+    });
+  });
+
+  it("getRosters defaults a team's record to all zeros and a null waiver position when Sleeper omits settings fields", async () => {
+    const rosterWithoutRecord = { ...rostersFixture[0]!, settings: {} };
+    const fetchImpl = fakeFetch({ [`/league/${leagueId}/rosters`]: [rosterWithoutRecord] });
+    const provider = new SleeperProvider(fetchImpl);
+
+    const rosters = await provider.getRosters(leagueId, leagueFixture.roster_positions);
+
+    expect(rosters[0]!.record).toEqual({
+      wins: 0,
+      losses: 0,
+      ties: 0,
+      pointsFor: 0,
+      pointsAgainst: 0,
+      waiverPosition: null,
+    });
+  });
+
   it("getScoringSettings returns the league's raw stat category point values", async () => {
     const fetchImpl = fakeFetch({ [`/league/${leagueId}`]: leagueFixture });
     const provider = new SleeperProvider(fetchImpl);

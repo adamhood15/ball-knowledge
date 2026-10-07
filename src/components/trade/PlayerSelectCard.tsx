@@ -22,9 +22,11 @@ export function PlayerSelectCard({
       aria-checked={isSelected}
       onClick={onToggle}
       className={[
-        "flex flex-col gap-1 rounded-lg border p-3 text-left transition-all duration-150",
+        "flex flex-col gap-1 rounded-none border p-3 text-left transition-all duration-150",
         colors.background,
-        isSelected ? "border-card-border shadow-[0_0_12px_var(--color-card-border)]" : colors.border,
+        isSelected
+          ? "border-card-border shadow-[3px_3px_0_0_var(--color-card-border)]"
+          : `${colors.border} shadow-[2px_2px_0_0_var(--color-neutral-shadow)] ${colors.hoverShadow}`,
       ].join(" ")}
     >
       <span className={`text-xs font-semibold ${colors.text}`}>{position ?? "?"}</span>

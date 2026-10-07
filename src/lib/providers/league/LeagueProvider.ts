@@ -17,11 +17,23 @@ export interface LeagueProviderRosterPlayer {
   rosterSlot: string | null;
 }
 
+export interface LeagueProviderTeamRecord {
+  wins: number;
+  losses: number;
+  ties: number;
+  pointsFor: number;
+  pointsAgainst: number;
+  /** Reverse-standings waiver queue position (1 = first priority, typically the worst team), or
+   * null if the platform doesn't report one. */
+  waiverPosition: number | null;
+}
+
 export interface LeagueProviderRoster {
   externalTeamId: string;
   ownerExternalUserId: string | null;
   /** Starters first, in the league's configured slot order, then bench players. */
   players: LeagueProviderRosterPlayer[];
+  record: LeagueProviderTeamRecord;
 }
 
 export interface LeagueProviderMember {

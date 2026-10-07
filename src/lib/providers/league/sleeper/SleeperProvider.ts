@@ -29,6 +29,21 @@ interface SleeperRosterResponse {
   owner_id: string | null;
   players: string[] | null;
   starters: string[] | null;
+  settings?: {
+    wins?: number;
+    losses?: number;
+    ties?: number;
+    fpts?: number;
+    fpts_decimal?: number;
+    fpts_against?: number;
+    fpts_against_decimal?: number;
+    waiver_position?: number;
+  };
+}
+
+// Sleeper reports points as separate whole/decimal fields (fpts: 1245, fpts_decimal: 67 -> 1245.67).
+function sleeperPointsToDecimal(whole?: number, decimal?: number): number {
+  return (whole ?? 0) + (decimal ?? 0) / 100;
 }
 
 interface SleeperUserResponse {
@@ -92,6 +107,14 @@ export class SleeperProvider implements LeagueProvider {
           })),
           ...benchPlayerIds.map((canonicalPlayerId) => ({ canonicalPlayerId, rosterSlot: null })),
         ],
+        record: {
+          wins: roster.settings?.wins ?? 0,
+          losses: roster.settings?.losses ?? 0,
+          ties: roster.settings?.ties ?? 0,
+          pointsFor: sleeperPointsToDecimal(roster.settings?.fpts, roster.settings?.fpts_decimal),
+          pointsAgainst: sleeperPointsToDecimal(roster.settings?.fpts_against, roster.settings?.fpts_against_decimal),
+          waiverPosition: roster.settings?.waiver_position ?? null,
+        },
       };
     });
   }

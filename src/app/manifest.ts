@@ -11,12 +11,22 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#0c0620",
     icons: [
       {
-        src: "/icons/icon-192.png",
-        sizes: "192x192",
+        src: "/logo/ball-knowledge-logo-64x64.png",
+        sizes: "64x64",
         type: "image/png",
       },
       {
-        src: "/icons/icon-512.png",
+        src: "/logo/ball-knowledge-logo-129x129.png",
+        sizes: "129x129",
+        type: "image/png",
+      },
+      {
+        src: "/logo/ball-knowledge-logo-256x256.png",
+        sizes: "256x256",
+        type: "image/png",
+      },
+      {
+        src: "/logo/ball-knowledge-logo-512x512.png",
         sizes: "512x512",
         type: "image/png",
       },

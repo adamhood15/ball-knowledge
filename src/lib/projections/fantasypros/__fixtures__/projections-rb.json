@@ -1,0 +1,37 @@
+{
+  "season": "2026",
+  "week": "0",
+  "count": "1",
+  "positions": "RB",
+  "scoring": "STD",
+  "players": [
+    {
+      "fpid": 90101,
+      "mflid": 80101,
+      "name": "Test Running Back One",
+      "position_id": "RB",
+      "team_id": "DET",
+      "filename": "test-running-back-one-rb.php",
+      "stats": {
+        "points": 301.53,
+        "points_ppr": 372.46,
+        "points_half": 337,
+        "rush_att": 274.36,
+        "rush_yds": 1380.55,
+        "rush_tds": 13.83,
+        "rush_yds_100": 0,
+        "rush_yds_200": 0,
+        "scrimage_yards_100": 0,
+        "scrimage_yards_200": 0,
+        "rec_rec": 70.93,
+        "rec_yds": 580.17,
+        "rec_tds": 4.13,
+        "rec_yds_100": 0,
+        "rec_yds_200": 0,
+        "fumbles": 1.13,
+        "ret_tds": 0,
+        "2pt_tds": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "sport": "NFL",
+  "count": 2,
+  "injuries": [
+    {
+      "player_id": 99001,
+      "yahoo_id": "10001",
+      "name": "Test Wide Receiver One",
+      "status": "IR",
+      "injury_type": "Knee",
+      "comment": "",
+      "injury_update_date": "2026-07-23 01:17:04",
+      "status_short": "IR",
+      "ir_weeks": [1, 2, 3],
+      "probability_of_playing": null
+    },
+    {
+      "player_id": 99002,
+      "yahoo_id": "10002",
+      "name": "Test Tight End One",
+      "status": "Questionable",
+      "injury_type": "Ankle",
+      "comment": "",
+      "injury_update_date": "2026-07-23 01:17:04",
+      "status_short": "Q",
+      "ir_weeks": [],
+      "probability_of_playing": 0.75
+    }
+  ]
+}

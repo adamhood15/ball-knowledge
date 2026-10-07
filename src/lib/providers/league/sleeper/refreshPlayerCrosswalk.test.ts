@@ -83,6 +83,82 @@ describe("refreshSleeperPlayerCrosswalkIfStale", () => {
     expect(prisma.upsertCalls.length).toBeGreaterThan(0);
     expect(clock.setLastRefreshedAtCalls).toEqual([now]);
   });
+
+  it("excludes non-fantasy-relevant positions (offensive line, IDP, special teams) even though Sleeper reports them", async () => {
+    const clock = fakeClock(null);
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        "1": { player_id: "1", full_name: "Some Guard", position: "G", team: "KC" },
+        "2": { player_id: "2", full_name: "Some Linebacker", position: "LB", team: "KC" },
+        "3": { player_id: "3", full_name: "Some Quarterback", position: "QB", team: "KC" },
+      }),
+    })) as unknown as typeof fetch;
+    const prisma = fakePlayerUpsertClient();
+
+    const result = await refreshSleeperPlayerCrosswalkIfStale({
+      clock,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      prisma: prisma as any,
+      fetchImpl,
+      now: new Date(),
+    });
+
+    expect(result.playersUpserted).toBe(1);
+    expect(prisma.upsertCalls).toHaveLength(1);
+    expect((prisma.upsertCalls[0] as { where: { canonicalId: string } }).where.canonicalId).toBe("3");
+  });
+
+  it("captures Sleeper's real active/inactive status instead of always defaulting to active", async () => {
+    const clock = fakeClock(null);
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        "1": { player_id: "1", full_name: "Retired QB", position: "QB", team: null, active: false },
+        "2": { player_id: "2", full_name: "Current QB", position: "QB", team: "KC", active: true },
+      }),
+    })) as unknown as typeof fetch;
+    const prisma = fakePlayerUpsertClient();
+
+    await refreshSleeperPlayerCrosswalkIfStale({
+      clock,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      prisma: prisma as any,
+      fetchImpl,
+      now: new Date(),
+    });
+
+    const calls = prisma.upsertCalls as { where: { canonicalId: string }; create: { active: boolean } }[];
+    expect(calls.find((call) => call.where.canonicalId === "1")?.create.active).toBe(false);
+    expect(calls.find((call) => call.where.canonicalId === "2")?.create.active).toBe(true);
+  });
+
+  it("sets each player's bye week from their team's 2026 schedule, and null when the team is unknown", async () => {
+    const clock = fakeClock(null);
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        "1": { player_id: "1", full_name: "Chiefs QB", position: "QB", team: "KC" },
+        "2": { player_id: "2", full_name: "Teamless QB", position: "QB", team: null },
+      }),
+    })) as unknown as typeof fetch;
+    const prisma = fakePlayerUpsertClient();
+
+    await refreshSleeperPlayerCrosswalkIfStale({
+      clock,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      prisma: prisma as any,
+      fetchImpl,
+      now: new Date(),
+    });
+
+    const calls = prisma.upsertCalls as { where: { canonicalId: string }; create: { byeWeek: number | null } }[];
+    expect(calls.find((call) => call.where.canonicalId === "1")?.create.byeWeek).toBe(5);
+    expect(calls.find((call) => call.where.canonicalId === "2")?.create.byeWeek).toBeNull();
+  });
 });
 
 describe("ensurePlayersResolvable", () => {

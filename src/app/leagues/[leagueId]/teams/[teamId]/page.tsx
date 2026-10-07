@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { attachProjectedValuesToRoster } from "@/lib/leagueSync/attachProjectedValuesToRoster";
 import { getTeamRosterView } from "@/lib/leagueSync/getTeamRosterView";
 import { TeamRosterCard } from "@/components/leagues/TeamRosterCard";
 import { TeamCard } from "@/components/leagues/TeamCard";
@@ -26,6 +27,7 @@ export default async function LeagueTeamDetailPage({
     notFound();
   }
 
+  const players = await attachProjectedValuesToRoster({ leagueId, prisma, players: rosterView.players });
   const isOwnTeam = team.ownerId === currentUserId;
 
   return (
@@ -45,7 +47,7 @@ export default async function LeagueTeamDetailPage({
         ) : null}
       </div>
       <div className="mx-auto w-full max-w-md">
-        <TeamRosterCard players={rosterView.players} />
+        <TeamRosterCard players={players} />
       </div>
     </div>
   );

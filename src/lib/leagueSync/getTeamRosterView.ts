@@ -48,6 +48,10 @@ export async function getTeamRosterView({
         name: player?.name ?? null,
         position: player?.position ?? null,
         nflTeam: player?.nflTeam ?? null,
+        byeWeek: player?.byeWeek ?? null,
+        // Filled in by the calling page via getRosterProjectedValues — left null here so this
+        // function stays independent of the FantasyPros dependency and league scoring settings.
+        projectedValue: null,
         rosterSlot: rosterPlayer.rosterSlot,
       };
     }),

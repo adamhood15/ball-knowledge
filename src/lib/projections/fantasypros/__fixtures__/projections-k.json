@@ -1,0 +1,25 @@
+{
+  "season": "2026",
+  "week": "0",
+  "count": "1",
+  "positions": "K",
+  "scoring": "STD",
+  "players": [
+    {
+      "fpid": 90401,
+      "mflid": 80401,
+      "name": "Test Kicker One",
+      "position_id": "K",
+      "team_id": "DAL",
+      "filename": "test-kicker-one-k.php",
+      "stats": {
+        "points": 152.98,
+        "points_ppr": 152.98,
+        "points_half": 152.98,
+        "fga": 39.88,
+        "fg": 35.16,
+        "xpt": 47.5
+      }
+    }
+  ]
+}

@@ -62,6 +62,12 @@ enum LeagueMode {
   DYNASTY
 }
 
+enum InviteStatus {
+  PENDING
+  CLAIMED
+  EXPIRED
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -90,8 +96,9 @@ model League {
   rosterConstruction Json?
   createdByUserId    String
 
-  createdBy User   @relation("LeagueCommissioner", fields: [createdByUserId], references: [id])
+  createdBy User          @relation("LeagueCommissioner", fields: [createdByUserId], references: [id])
   teams     Team[]
+  invites   LeagueInvite[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -109,15 +116,45 @@ model Team {
   platformDisplayName String?
   platformTeamName    String?
   platformAvatarUrl   String?
+  // Standings, refreshed on every sync. Zero for a manually-entered league, which has no
+  // platform-reported games played.
+  wins            Int   @default(0)
+  losses          Int   @default(0)
+  ties            Int   @default(0)
+  pointsFor       Float @default(0)
+  pointsAgainst   Float @default(0)
+  // Reverse-standings waiver queue position (1 = first priority, typically the worst team).
+  // Null for a manually-entered league, which has no platform-reported waiver order.
+  waiverPosition  Int?
 
-  league  League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
-  owner   User?    @relation(fields: [ownerId], references: [id])
+  league  League         @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  owner   User?          @relation(fields: [ownerId], references: [id])
   rosters Roster[]
+  invites LeagueInvite[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([leagueId, externalTeamId])
+}
+
+// A commissioner-issued invitation for a specific person (by email) to claim a specific,
+// currently-unclaimed Team in their league. One team can only be claimed once — a second
+// invite for an already-claimed team should not be created (enforced in the action, not here,
+// since "unclaimed" depends on Team.ownerId at the moment of sending, not a schema constraint).
+model LeagueInvite {
+  id           String       @id @default(cuid())
+  leagueId     String
+  teamId       String
+  invitedEmail String
+  token        String       @unique
+  status       InviteStatus @default(PENDING)
+
+  league League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  respondedAt DateTime?
 }
 
 model Roster {
