@@ -1,5 +1,6 @@
 import { PlayerHeadshot } from "@/components/leagues/PlayerHeadshot";
 import { getDummyValueScore } from "@/lib/design/dummyPlayerStats";
+import { getPositionColorClasses } from "@/lib/design/positionColors";
 import { getValueScoreColorClasses } from "@/lib/design/valueScoreColors";
 import { playerImageUrl } from "@/lib/providers/league/sleeper/playerImageUrl";
 
@@ -21,18 +22,27 @@ function PlayerRow({ player, slotLabel }: { player: TeamRosterPlayer; slotLabel:
   const displayName = player.name ?? `Unknown player (${player.canonicalPlayerId})`;
   const valueScore = getDummyValueScore(player.canonicalPlayerId);
   const valueScoreColors = getValueScoreColorClasses(valueScore);
+  const positionColors = getPositionColorClasses(slotLabel);
+  const teamAndByeDetail = [
+    player.nflTeam,
+    player.byeWeek != null ? `Bye ${player.byeWeek}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <div data-testid="roster-player-row" className="flex items-center gap-3 border-b border-card-border/10 py-2 last:border-b-0">
+    <div
+      data-testid="roster-player-row"
+      className={`flex items-center gap-3 rounded-none border-2 px-3 py-2 shadow-[2px_2px_0_0_var(--color-neutral-shadow)] ${positionColors.background} ${positionColors.border}`}
+    >
       <PlayerHeadshot src={playerImageUrl(player)} />
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-sm text-body-text" data-testid="roster-player-name">
           {displayName}
         </span>
-        <span className="truncate text-xs text-muted-text">
-          {slotLabel}
-          {player.nflTeam ? ` · ${player.nflTeam}` : ""}
-          {player.byeWeek != null ? ` · Bye ${player.byeWeek}` : ""}
+        <span className="flex min-w-0 items-center gap-1 text-xs">
+          <span className={`flex-shrink-0 font-semibold ${positionColors.text}`}>{slotLabel}</span>
+          {teamAndByeDetail ? <span className="truncate text-muted-text">· {teamAndByeDetail}</span> : null}
         </span>
       </div>
       {player.projectedValue != null ? (
@@ -55,7 +65,7 @@ export function TeamRosterCard({ players }: { players: TeamRosterPlayer[] }) {
   const bench = players.filter((player) => player.rosterSlot === null);
 
   return (
-    <div data-testid="roster-card" className="flex flex-col gap-1 bg-background p-4">
+    <div data-testid="roster-card" className="flex flex-col gap-2 bg-background p-4">
       {starters.map((player) => (
         <PlayerRow key={player.canonicalPlayerId} player={player} slotLabel={player.rosterSlot!} />
       ))}
