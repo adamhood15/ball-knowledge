@@ -135,6 +135,32 @@ describe("refreshSleeperPlayerCrosswalkIfStale", () => {
     expect(calls.find((call) => call.where.canonicalId === "2")?.create.active).toBe(true);
   });
 
+  it("stores each player's current Sleeper injury designation, and null when they're healthy", async () => {
+    const clock = fakeClock(null);
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        "1": { player_id: "1", full_name: "Hurt WR", position: "WR", team: "KC", injury_status: "Questionable" },
+        "2": { player_id: "2", full_name: "Healthy WR", position: "WR", team: "KC", injury_status: null },
+      }),
+    })) as unknown as typeof fetch;
+    const prisma = fakePlayerUpsertClient();
+
+    await refreshSleeperPlayerCrosswalkIfStale({
+      clock,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      prisma: prisma as any,
+      fetchImpl,
+      now: new Date(),
+    });
+
+    const calls = prisma.upsertCalls as { where: { canonicalId: string }; create: { injuryStatus: string | null }; update: { injuryStatus: string | null } }[];
+    expect(calls.find((call) => call.where.canonicalId === "1")?.create.injuryStatus).toBe("Questionable");
+    expect(calls.find((call) => call.where.canonicalId === "1")?.update.injuryStatus).toBe("Questionable");
+    expect(calls.find((call) => call.where.canonicalId === "2")?.create.injuryStatus).toBeNull();
+  });
+
   it("sets each player's bye week from their team's 2026 schedule, and null when the team is unknown", async () => {
     const clock = fakeClock(null);
     const fetchImpl = vi.fn(async () => ({

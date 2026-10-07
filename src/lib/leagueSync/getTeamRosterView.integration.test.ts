@@ -70,9 +70,22 @@ describe("getTeamRosterView (Prisma integration)", () => {
     expect(view!.teamName).toBe("Alice's Aces");
     expect(view!.avatarUrl).toBe("https://sleepercdn.com/avatars/abc");
     expect(view!.players).toEqual([
-      { canonicalPlayerId: `${testRunId}-p1`, name: "Known Player", position: "RB", nflTeam: null, byeWeek: null, projectedValue: null, rosterSlot: "RB" },
-      { canonicalPlayerId: `${testRunId}-p2`, name: "Fetched Player", position: "WR", nflTeam: "KC", byeWeek: 5, projectedValue: null, rosterSlot: null },
+      { canonicalPlayerId: `${testRunId}-p1`, name: "Known Player", position: "RB", nflTeam: null, byeWeek: null, injuryStatus: null, projectedValue: null, rosterSlot: "RB" },
+      { canonicalPlayerId: `${testRunId}-p2`, name: "Fetched Player", position: "WR", nflTeam: "KC", byeWeek: 5, injuryStatus: null, projectedValue: null, rosterSlot: null },
     ]);
     expect(fetchImpl).toHaveBeenCalled();
+  });
+
+  it("passes each player's stored injury designation through to the roster view", async () => {
+    await prisma.player.update({
+      where: { canonicalId: `${testRunId}-p1` },
+      data: { injuryStatus: "Questionable" },
+    });
+
+    const view = await getTeamRosterView({ prisma, teamId, fetchImpl: vi.fn(async () => ({ ok: true, status: 200, json: async () => ({}) })) as unknown as typeof fetch });
+
+    expect(view!.players.find((player) => player.canonicalPlayerId === `${testRunId}-p1`)?.injuryStatus).toBe(
+      "Questionable",
+    );
   });
 });

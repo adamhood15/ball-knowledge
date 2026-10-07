@@ -2,6 +2,8 @@ import { PlayerHeadshot } from "@/components/leagues/PlayerHeadshot";
 import { getDummyValueScore } from "@/lib/design/dummyPlayerStats";
 import { getPositionColorClasses } from "@/lib/design/positionColors";
 import { getValueScoreColorClasses } from "@/lib/design/valueScoreColors";
+import { injuryStatusBadgeLabel } from "@/lib/injuries/injuryStatusBadgeLabel";
+import { injuryStatusBadgeClasses } from "@/lib/injuries/injuryStatusBadgeStyle";
 import { playerImageUrl } from "@/lib/providers/league/sleeper/playerImageUrl";
 
 export interface TeamRosterPlayer {
@@ -11,6 +13,8 @@ export interface TeamRosterPlayer {
   nflTeam: string | null;
   /** Real bye week, or null if the player hasn't been backfilled with one yet. */
   byeWeek: number | null;
+  /** Sleeper's current injury designation (e.g. "Questionable", "Out"), or null when healthy. */
+  injuryStatus: string | null;
   /** Real league-adjusted, risk-adjusted rest-of-season projected value (Phase 3's valuation
    * engine), or null when no FantasyPros projection was found for this player. */
   projectedValue: number | null;
@@ -23,6 +27,7 @@ function PlayerRow({ player, slotLabel }: { player: TeamRosterPlayer; slotLabel:
   const valueScore = getDummyValueScore(player.canonicalPlayerId);
   const valueScoreColors = getValueScoreColorClasses(valueScore);
   const positionColors = getPositionColorClasses(slotLabel);
+  const injuryBadgeLabel = injuryStatusBadgeLabel(player.injuryStatus);
   const teamAndByeDetail = [
     player.nflTeam,
     player.byeWeek != null ? `Bye ${player.byeWeek}` : null,
@@ -37,8 +42,18 @@ function PlayerRow({ player, slotLabel }: { player: TeamRosterPlayer; slotLabel:
     >
       <PlayerHeadshot src={playerImageUrl(player)} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-sm text-body-text" data-testid="roster-player-name">
-          {displayName}
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-sm text-body-text" data-testid="roster-player-name">
+            {displayName}
+          </span>
+          {injuryBadgeLabel ? (
+            <span
+              data-testid="player-injury-status"
+              className={`flex-shrink-0 rounded-none border px-1 text-[10px] font-semibold tracking-wide shadow-[2px_2px_0_0_var(--color-neutral-shadow)] ${injuryStatusBadgeClasses(player.injuryStatus)}`}
+            >
+              {injuryBadgeLabel}
+            </span>
+          ) : null}
         </span>
         <span className="flex min-w-0 items-center gap-1 text-xs">
           <span className={`flex-shrink-0 font-semibold ${positionColors.text}`}>{slotLabel}</span>

@@ -49,6 +49,7 @@ export async function getTeamRosterView({
         position: player?.position ?? null,
         nflTeam: player?.nflTeam ?? null,
         byeWeek: player?.byeWeek ?? null,
+        injuryStatus: player?.injuryStatus ?? null,
         // Filled in by the calling page via getRosterProjectedValues — left null here so this
         // function stays independent of the FantasyPros dependency and league scoring settings.
         projectedValue: null,
