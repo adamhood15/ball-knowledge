@@ -203,6 +203,9 @@ model Player {
   // (retired, out of the league, etc.). Search excludes inactive players; roster display does
   // not, since a roster can still reference someone who went inactive after being drafted/added.
   active         Boolean @default(true)
+  // Sleeper's current injury designation (e.g. "Questionable", "Out", "IR"), refreshed with the
+  // crosswalk. Null when the player is healthy or Sleeper hasn't reported a designation.
+  injuryStatus   String?
   // Maps this canonical player to platform-specific IDs (Sleeper, ESPN), keyed by platform name.
   platformIdCrosswalk Json?
 

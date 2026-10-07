@@ -11,6 +11,7 @@ const player = (overrides: Partial<TeamRosterPlayer> & Pick<TeamRosterPlayer, "c
   byeWeek: 10,
   projectedValue: null,
   rosterSlot: "QB",
+  injuryStatus: null,
   ...overrides,
 });
 
@@ -108,6 +109,33 @@ describe("TeamRosterCard", () => {
     // "to the left of" == earlier in DOM order within the row, given the row's left-to-right flex layout.
     const rowChildrenPosition = Array.from(row.querySelectorAll("*"));
     expect(rowChildrenPosition.indexOf(projectedValueEl)).toBeLessThan(rowChildrenPosition.indexOf(valueScoreEl));
+  });
+
+  it("shows the player's injury designation as a short badge when they have one", () => {
+    render(<TeamRosterCard players={[player({ canonicalPlayerId: "100", injuryStatus: "Questionable" })]} />);
+
+    expect(screen.getByTestId("player-injury-status")).toHaveTextContent("Q");
+  });
+
+  it("shows a full-length label for designations that aren't abbreviated, like Out and IR", () => {
+    render(
+      <TeamRosterCard
+        players={[
+          player({ canonicalPlayerId: "100", injuryStatus: "Out" }),
+          player({ canonicalPlayerId: "101", injuryStatus: "IR" }),
+        ]}
+      />,
+    );
+
+    const badges = screen.getAllByTestId("player-injury-status");
+    expect(badges[0]).toHaveTextContent("OUT");
+    expect(badges[1]).toHaveTextContent("IR");
+  });
+
+  it("shows no injury badge for a healthy player", () => {
+    render(<TeamRosterCard players={[player({ canonicalPlayerId: "100", injuryStatus: null })]} />);
+
+    expect(screen.queryByTestId("player-injury-status")).not.toBeInTheDocument();
   });
 
   it("shows nothing for the projected value when it isn't available yet, rather than a blank badge", () => {

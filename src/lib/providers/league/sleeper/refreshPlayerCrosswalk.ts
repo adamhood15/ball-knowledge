@@ -15,6 +15,7 @@ interface SleeperPlayerResponse {
   position?: string | null;
   team?: string | null;
   active?: boolean;
+  injury_status?: string | null;
 }
 
 type FetchImpl = (url: string) => Promise<Response>;
@@ -53,6 +54,7 @@ async function upsertPlayers(
             nflTeam: player.team ?? null,
             byeWeek,
             active: player.active ?? true,
+            injuryStatus: player.injury_status ?? null,
             platformIdCrosswalk: { sleeper: player.player_id },
           },
           update: {
@@ -62,6 +64,7 @@ async function upsertPlayers(
             nflTeam: player.team ?? null,
             byeWeek,
             active: player.active ?? true,
+            injuryStatus: player.injury_status ?? null,
             platformIdCrosswalk: { sleeper: player.player_id },
           },
         });
